@@ -39,8 +39,7 @@ Answer to foo bar dilemma.
 
 == Screenshots ==
 
-1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Note that the screenshot is taken from
-the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1.png` (or jpg, jpeg, gif)
+1. screenshot-1.png: Plugin Admin Panel
 2. This is the second screen shot
 
 == Changelog ==
@@ -48,6 +47,7 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 = 1.0.1 =
 - output changed 
 
+== Upgrade Notice ==
 
 
 `<?php code(); // goes in backticks ?>`
