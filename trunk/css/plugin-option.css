@@ -1,0 +1,43 @@
+/*
+
+	All definitions for the plugin option page
+
+*/
+
+
+
+
+/***
+*
+*       set of feature defintions
+*
+****/
+
+.small
+{
+  font-family:  curier;
+  font-size:    14px;
+  font-weight:  bold;
+  font-style:   italic;
+}
+
+#plugin_option_set
+{
+	border: 1px solid #000;
+	margin: 5px;
+	padding:10px;
+}
+
+#plugin_option_block
+{
+	height:1%;
+	position:relative;
+	display:inline;
+	margin-right: 20px;
+}
+
+#plugin_option_entry
+{
+}
+
+
