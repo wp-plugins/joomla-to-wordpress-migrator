@@ -23,7 +23,7 @@ function throwERROR($msg)
 
 
 
-function joomla2wp_do_mig()
+function joomla2wp_do_mig( $joomla_cats )
 {
   global  $wpdb,
           $CON,
@@ -43,7 +43,7 @@ function joomla2wp_do_mig()
   if ( function_exists('set_time_limit') )
     set_time_limit(25);
   else
-    echo '<br />Warning: can not execute set_time_limit() script may abort...<br />';
+    _e( '<br />Warning: can not execute set_time_limit() script may abort...<br />', 'joomla2wp');
 
   if ( !$CON )
     $CON = j2wp_do_mysql_connect();
@@ -57,11 +57,6 @@ function joomla2wp_do_mig()
     $user_id = wp_create_user( $user_name, $random_password, $user_email );
   } 
   
-  j2wp_do_joomla_connect();
-  
-  //  get cats from joomla
-  $joomla_cats = j2wp_get_joomla_cats();
-
   //  create categories in wp and fill category field
   $mig_cat_array = j2wp_create_cat_wp( $joomla_cats );
 
@@ -79,6 +74,7 @@ function joomla2wp_do_mig()
 
   return;
 }
+
 
 function j2wp_create_cat_wp( $joomla_cats )
 {
@@ -121,7 +117,12 @@ function j2wp_get_joomla_cats()
   global  $wpdb,
           $CON;
           
+
+  if ( !$CON )
+    $CON = j2wp_do_mysql_connect();
+
   $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
+  j2wp_do_joomla_connect();
   
   $query = "SELECT id, title FROM " . $j2wp_joomla_tb_prefix . "categories WHERE section NOT LIKE('com_%') ORDER BY id ";
   $result = mysql_query($query, $CON);
@@ -135,7 +136,6 @@ function j2wp_get_joomla_cats()
                           'title' => $row['title']
                           );
   }
-  echo '<br /> Found ' . count($joomla_cats) . ' Categories...<br /><br />' . "\n";
   mysql_free_result($result);
 
   return $joomla_cats;
@@ -174,12 +174,13 @@ function  j2wp_joomla_wp_posts_by_cat( $mig_cat_array, $cat_index, $user_id )
           
   $wp_cat_id = $mig_cat_array['wp_id'];
           
-  echo '<br />Processing Category: <b>' . $mig_cat_array['joomla_title'] . '</b>   ===>';
+  echo '<br />' . __('Processing Category: <b>', 'joomla2wp') . $mig_cat_array['joomla_title'] . '</b>   ===>';
 
   // first get count of posts in category
   $j2wp_post_count = j2wp_get_post_count( $mig_cat_array );
 
-  echo ' found ' . $j2wp_post_count . ' posts.... <br />';
+  _e( ' found ', 'joomla2wp');
+  echo $j2wp_post_count . ' posts.... <br />';
 
   // if there are too many posts - split to parts
   $working_rounds = 1;
@@ -224,7 +225,7 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id 
   j2wp_do_wp_connect();
 
     $count = 0;
-    // foreach ($wp_posts as $j2wp_post) 
+    //  foreach ($wp_posts as $j2wp_post) 
     foreach ($sql_query as $query) 
     {
       set_time_limit(25);
@@ -232,7 +233,7 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id 
       if ( mysql_error() )
         echo mysql_error();
 
-      //  wp_insert_post( $j2wp_post );
+      //  $id = wp_insert_post( $j2wp_post );
 
       $id = mysql_insert_id($CON);
       if($id) 
@@ -246,7 +247,8 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id 
       }
     }
 
-    echo 'Inserted ' . $count . ' posts<br /><br />';
+    _e( 'Inserted ', 'joomla2wp');
+    echo $count . ' posts<br /><br />';
 
   return;
 }
@@ -349,7 +351,7 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
     $post_tags[] = $R['metakey'];
   }
 
-  echo '<br /> Processing ' . count($wp_posts) . ' Posts...<br />' . "\n";
+  echo '<br /> ' . __( 'Processing ', 'joomla2wp') . count($wp_posts) . ' Posts...<br />' . "\n";
 
   $result_array[0] = $sql_query;
   $result_array[1] = $wp_posts;
@@ -365,6 +367,10 @@ function joomla2wp_change_urls()
 {
   global  $wpdb,
           $CON;
+
+// check
+// <a href="mortgagecenter/39-news/11548-focus-on-the-6500-tax-credit.html"> $6,500 tax credit.</a>
+
 
   if ( !$CON )
     $CON = j2wp_do_mysql_connect();
@@ -401,7 +407,7 @@ function joomla2wp_change_urls()
   }
   
   //  check each post for liks
-  echo '<br />The following links must be changed manually: <br /><br />' . "\n";
+  echo '<br />' . __( 'The following links must be changed manually:', 'joomla2wp') . ' <br /><br />' . "\n";
 
   foreach ( $wp_posts as $j2wp_post )
   {
