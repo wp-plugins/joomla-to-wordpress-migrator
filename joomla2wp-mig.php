@@ -22,10 +22,6 @@ function throwERROR($msg)
     return;
 }
 
-function j2wp_curl()
-{
-}
-
 function j2wp_prepare_mig( $func )
 {
   ob_end_flush();
@@ -33,7 +29,6 @@ function j2wp_prepare_mig( $func )
   flush();
   ob_flush();
 
-  j2wp_socket(); 
 
   if ( is_array($func) )
   {

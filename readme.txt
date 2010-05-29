@@ -5,7 +5,7 @@ Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
 Tags: joomla, wordpress, migrator, converter
 Requires at least: 2.9.2
 Tested up to: 2.9.2
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 
 A plugin to migrate content from Joomla to Wordpress.
 

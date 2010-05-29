@@ -16,7 +16,7 @@
 .small
 {
   font-family:  curier;
-  font-size:    14px;
+  font-size:    12px;
   font-weight:  bold;
   font-style:   italic;
 }
@@ -41,3 +41,9 @@
 }
 
 
+#wpwrap #wpcontent #wpbody .wrap SELECT
+{
+         padding:	5px;
+         height:	auto;
+         font-size:	11px;
+}
