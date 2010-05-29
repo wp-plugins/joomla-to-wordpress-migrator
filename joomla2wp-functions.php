@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: Joomla to WP Migrator
-Plugin URI: http://www.it-gnoth.de
+Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
 Description: migrates all posts from Joomla tables to WP tables
-Version: 1.1.0
+Version: 1.1.1
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -30,6 +30,17 @@ License: GPL2
 //  ini_set('display_errors', 1); 
 //  error_reporting(E_ALL);
 
+
+////////////////////////////////////////////////////////////////////////////////////////
+//  define varaibles to have them in global scope including files and functions
+////////////////////////////////////////////////////////////////////////////////////////
+$j2wp_mysql_vars = array();
+
+
+
+ob_implicit_flush(1);
+
+include_once( dirname(__FILE__) . '/joomla2wp-output.php');
 include_once( dirname(__FILE__) . '/joomla2wp-mig.php');
 include_once( dirname(__FILE__) . '/joomla2wp-admin.php');
 
@@ -62,6 +73,10 @@ function j2wp_load_css()
   echo 	"\n\n";
   echo 	'<!-- Joomla to Wordpress Converter - Plugin Option CSS -->' . "\n";
   echo 	'<link rel="stylesheet" type="text/css" media="all" href="' . JTWPDIR . 'css/plugin-option.css" />';
+  echo 	'<!-- Joomla to Wordpress Converter - Plugin Directory Variable -->' . "\n";
+  echo  '<script type="text/javascript">/* <![CDATA[ */' . "\n";
+  echo  '   var plugin_dir_url = "' . plugin_dir_url( __FILE__ ) . '";' . "\n";
+  echo  ' /* ]]> */</script>' . "\n";
   echo 	"\n\n";
 	
   return;
@@ -72,17 +87,22 @@ function j2wp_load_css()
 ////////////////////////////////////////////////////////////////////////////////
 function register_j2wp_options()
 {
+  wp_enqueue_script( 'json-form' );
+  wp_enqueue_script( 'get_output', plugin_dir_url( __FILE__ ) . 'js/ajax/get_output.js', array( 'jquery', 'json2' ), "1.0.30", true );
+
+
   //  add options
-  add_option( 'joomla2wp', 'j2wp_cat_sel', 'on' );
-  add_option( 'joomla2wp', 'j2wp_mysql_srv', 'localhost' );
-  add_option( 'joomla2wp', 'j2wp_mysql_usr' );
-  add_option( 'joomla2wp', 'j2wp_mysql_pswd' );
-  add_option( 'joomla2wp', 'j2wp_joomla_db_name' );
-  add_option( 'joomla2wp', 'j2wp_joomla_tb_prefix', 'jos_' );
-  add_option( 'joomla2wp', 'j2wp_joomla_web_url' );
-  add_option( 'joomla2wp', 'j2wp_wp_db_name' );
-  add_option( 'joomla2wp', 'j2wp_wp_tb_prefix', 'wp_' );
-  add_option( 'joomla2wp', 'j2wp_wp_web_url' );
+  add_option( 'j2wp_mysql_change_vars', 'off' );
+  add_option( 'j2wp_cat_sel', 'on' );
+  add_option( 'j2wp_mysql_srv', 'localhost' );
+  add_option( 'j2wp_mysql_usr', '' );
+  add_option( 'j2wp_mysql_pswd', '' );
+  add_option( 'j2wp_joomla_db_name', '' );
+  add_option( 'j2wp_joomla_tb_prefix', 'jos_' );
+  add_option( 'j2wp_joomla_web_url', '' );
+  add_option( 'j2wp_wp_db_name', '' );
+  add_option( 'j2wp_wp_tb_prefix', 'wp_' );
+  add_option( 'j2wp_wp_web_url', '' );
 //  register_setting( 'joomla2wp', 'j2wp_mysql_usr', 'localhost' );
 //  register_setting( 'joomla2wp', 'j2wp_mysql_srv', 'localhost' );
 
@@ -96,7 +116,9 @@ function joomla2wp_menu()
 {
   global $wpdb;
   global $joomla_cats;
+  static $sel_values = 0;
 
+  $j2wp_mysql_vars = j2wp_check_mysql_variables();
 
   if ( isset( $_POST['j2wp_options_update'] ) )
   {
@@ -142,9 +164,6 @@ function joomla2wp_menu()
 	
   if ( isset( $_POST['do_mig_btn'] ) )
   {
-    //  call to migration script
-    //  include 'joomla2wp_mig.php';
-
     // check if categories should be selected
     $j2wp_cat_sel = get_option('j2wp_cat_sel');
     if ( $j2wp_cat_sel == 'off' )
@@ -153,17 +172,7 @@ function joomla2wp_menu()
     }
     else
     {
-      echo '<br />';
-      //  get all cats from joomla
-      $joomla_cats = j2wp_get_joomla_cats();
-
-      echo '<br /> Found ' . count($joomla_cats) . ' Categories...<br /><br />' . "\n";
-      flush();
-
-      joomla2wp_do_mig( $joomla_cats );
-   
-      echo '<div id="message" class="updated fade">';
-      echo '<strong>Migration done </strong>.</div>';
+      j2wp_prepare_mig( 1 );
     }
   }
 
@@ -178,26 +187,10 @@ function joomla2wp_menu()
   {
     // get the selected cats
     $sel_values = $_POST['joomla_cat_box'];
+
     if ( $sel_values )
     {
-      //  get all cats from joomla
-      $joomla_cats = j2wp_get_joomla_cats();
-
-      $joomla_temp_cats = array();
-      foreach ( $sel_values as $val )
-      {
-        $joomla_temp_cats[] = array(
-                              'id'    => $joomla_cats[$val]['id'],
-                              'title' => $joomla_cats[$val]['title']
-                              );
-      }
-
-      $joomla_cats = $joomla_temp_cats;
-
-      joomla2wp_do_mig( $joomla_cats );
-   
-      echo '<div id="message" class="updated fade">';
-      echo '<strong>Migration done </strong>.</div>';
+      j2wp_prepare_mig( $sel_values );
     }
     else
     {
@@ -221,13 +214,17 @@ function joomla2wp_menu()
 
   return;
 }
-         
 
+         
+////////////////////////////////////////////////////////////////////////////////
+// plugin options
+////////////////////////////////////////////////////////////////////////////////
 function joomla2wp_get_options()
 {
   global  $j2wp_mysql_srv,
           $j2wp_mysql_usr,
           $j2wp_mysql_pswd,
+          $j2wp_mysql_change_vars,
           $j2wp_joomla_db_name,
           $j2wp_joomla_tb_prefix,
           $j2wp_joomla_web_url,
@@ -235,6 +232,7 @@ function joomla2wp_get_options()
           $j2wp_wp_tb_prefix,
           $j2wp_wp_web_url;
 
+  $j2wp_mysql_change_vars = get_option("j2wp_mysql_change_vars");
   $j2wp_mysql_srv       = get_option("j2wp_mysql_srv");
   $j2wp_mysql_usr       = get_option("j2wp_mysql_usr");
   $j2wp_mysql_pswd      = get_option("j2wp_mysql_pswd");
@@ -248,9 +246,14 @@ function joomla2wp_get_options()
   return;
 }
 
+
+
+////////////////////////////////////////////////////////////////////////////////
 function update_j2wp_options()
 {
-  //  check if show header option checkbox is set 
+  global $j2wp_mysql_vars;
+
+  //  check if category selection option checkbox is set 
   if (!isset( $_POST['new_j2wp_cat_sel'] ))
   {
     $_POST['new_j2wp_cat_sel'] = 'off';
@@ -262,22 +265,45 @@ function update_j2wp_options()
     $cat_sel = 'on';
   }
 
-	//  write Mysql Server if changed
-	if  ( $_POST['new_j2wp_mysql_srv'] != get_option( 'j2wp_mysql_srv' ) )
-	{
-		$j2wp_mysql_srv = $_POST['new_j2wp_mysql_srv'];
-	}
-	//  write Mysql User if changed
-	if  ( $_POST['new_j2wp_mysql_usr'] != get_option( 'j2wp_mysql_usr' ) )
-	{
-		$j2wp_mysql_srv = $_POST['new_j2wp_mysql_usr'];
-	}
-	//  write Mysql User Password if changed
-	if  ( $_POST['new_j2wp_mysql_pswd'] != get_option( 'j2wp_mysql_pswd' ) )
-	{
-		$j2wp_mysql_pswd = $_POST['new_j2wp_mysql_pswd'];
-	}
+  //  check if Change Mysql Server Variables option checkbox is set 
+  if (!isset( $_POST['new_j2wp_mysql_change_vars'] ))
+  {
+    $_POST['new_j2wp_mysql_change_vars'] = 'off';
+    $j2wp_mysql_change_vars = 'off';
+  }
+  else
+  {
+    $_POST['new_j2wp_mysql_change_vars'] = 'on';
+    $j2wp_mysql_change_vars = 'on';
+    // set values
+    $j2wp_mysql_vars = $_SESSION['j2wp_mysql_vars'];
+    for ( $i = 0; $i < count($j2wp_mysql_vars); $i++ )
+    {
+      $temp_str = 'new_j2wp_mysql_var_' . $i;
+      $j2wp_mysql_vars[$i]['Value'] = $_POST[$temp_str];
+    }
+    // save new values in session variable
+    $_SESSION['j2wp_mysql_vars'] = $j2wp_mysql_vars;
+    j2wp_set_mysql_variables();
+  }
 
+  //  write Mysql Server if changed
+  if  ( $_POST['new_j2wp_mysql_srv'] != get_option( 'j2wp_mysql_srv' ) )
+  {
+    $j2wp_mysql_srv = $_POST['new_j2wp_mysql_srv'];
+  }
+  //  write Mysql User if changed
+  if  ( $_POST['new_j2wp_mysql_usr'] != get_option( 'j2wp_mysql_usr' ) )
+  {
+    $j2wp_mysql_usr = $_POST['new_j2wp_mysql_usr'];
+  }
+  //  write Mysql User Password if changed
+  if  ( $_POST['new_j2wp_mysql_pswd'] != get_option( 'j2wp_mysql_pswd' ) )
+  {
+    $j2wp_mysql_pswd = $_POST['new_j2wp_mysql_pswd'];
+  }
+
+  update_option( 'j2wp_mysql_change_vars', $_POST['new_j2wp_mysql_change_vars'] );
   update_option( 'j2wp_cat_sel', $_POST['new_j2wp_cat_sel'] );
   update_option( 'j2wp_mysql_srv', $_POST['new_j2wp_mysql_srv'] );
   update_option( 'j2wp_mysql_usr', $_POST['new_j2wp_mysql_usr'] );

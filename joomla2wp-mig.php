@@ -12,6 +12,7 @@ global  $j2wp_mysql_srv,
         $j2wp_wp_db_name,
         $j2wp_wp_tb_prefix,
         $j2wp_wp_web_url;
+global  $j2wp_mysql_vars;
 
 
 //  functions i8mported
@@ -21,9 +22,68 @@ function throwERROR($msg)
     return;
 }
 
+function j2wp_curl()
+{
+}
+
+function j2wp_prepare_mig( $func )
+{
+  ob_end_flush();
+  ob_start();
+  flush();
+  ob_flush();
+
+  j2wp_socket(); 
+
+  if ( is_array($func) )
+  {
+    $sel_values = $func;
+    $func = 2;
+  }
+
+  switch ( $func )
+  {
+    case 1:
+      j2wp_print_output_page();
+
+      //  get all cats from joomla
+      $joomla_cats = j2wp_get_joomla_cats();
+
+      echo '<br /> Found ' . count($joomla_cats) . ' Categories...<br /><br />' . "\n";
+      flush();
+
+      j2wp_do_mig( $joomla_cats );
+  
+      break;
+    case 2:
+      j2wp_print_output_page();
+      ob_end_flush();
+      ob_start();
+
+      //  get all cats from joomla
+      $joomla_cats = j2wp_get_joomla_cats();
+
+      $joomla_temp_cats = array();
+      foreach ( $sel_values as $val )
+      {
+        $joomla_temp_cats[] = array(
+                              'id'    => $joomla_cats[$val]['id'],
+                              'title' => $joomla_cats[$val]['title']
+                              );
+
+        $joomla_cats = $joomla_temp_cats;
+
+        j2wp_do_mig( $joomla_cats );
+      }
+      break;
+  }
+
+  return;
+}
 
 
-function joomla2wp_do_mig( $joomla_cats )
+
+function j2wp_do_mig( $joomla_cats )
 {
   global  $wpdb,
           $CON,
@@ -41,13 +101,16 @@ function joomla2wp_do_mig( $joomla_cats )
 
   // setting timelimit
   if ( function_exists('set_time_limit') )
+  {
+    ignore_user_abort(1);
     set_time_limit(25);
+  }
   else
     _e( '<br />Warning: can not execute set_time_limit() script may abort...<br />', 'joomla2wp');
 
   if ( !$CON )
     $CON = j2wp_do_mysql_connect();
-  
+
   //  check if user adminwp exists
   $user_name = 'adminwp';
   $user_id = username_exists( $user_name );
@@ -62,7 +125,6 @@ function joomla2wp_do_mig( $joomla_cats )
 
   //  j2wp_joomla_wp_posts_by_cat( $mig_cat_array[10], 10, $user_id );
 
-
   $index = 0;  
   foreach ( $joomla_cats as $jcat )
   {
@@ -70,7 +132,11 @@ function joomla2wp_do_mig( $joomla_cats )
     j2wp_joomla_wp_posts_by_cat( $mig_cat_array[$index], $index, $user_id );
     $index++;
   }
-  
+
+  echo '<div id="message" class="updated fade">';
+  echo '<strong>Migration done </strong>.</div>';
+
+  ob_end_flush();
 
   return;
 }
@@ -181,6 +247,9 @@ function  j2wp_joomla_wp_posts_by_cat( $mig_cat_array, $cat_index, $user_id )
 
   _e( ' found ', 'joomla2wp');
   echo $j2wp_post_count . ' posts.... <br />';
+  flush();
+  ob_flush();
+  sleep(1);
 
   // if there are too many posts - split to parts
   $working_rounds = 1;
@@ -200,6 +269,7 @@ function  j2wp_joomla_wp_posts_by_cat( $mig_cat_array, $cat_index, $user_id )
   // process all posts in steps
   for ( $i = 0; $i < $working_rounds; $i++)
   {
+    set_time_limit(25);
     $result_array = j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_pos, $user_id);
 
     $working_pos = $working_pos + $working_steps;
@@ -221,34 +291,48 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id 
           $CON;
           
 
+  set_time_limit(25);
   $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
   j2wp_do_wp_connect();
 
-    $count = 0;
-    //  foreach ($wp_posts as $j2wp_post) 
-    foreach ($sql_query as $query) 
+  j2wp_set_mysql_variables();
+
+  $count = 0;
+  //  foreach ($wp_posts as $j2wp_post) 
+  foreach ($sql_query as $query) 
+  {
+    if ( (($count % 50) == 0) )
+      echo '.';
+    flush();
+    ob_flush();
+    set_time_limit(25);
+    mysql_query($query,$CON);
+    if ( mysql_error() )
+      echo mysql_error();
+
+    //  $id = wp_insert_post( $j2wp_post );
+
+    set_time_limit(25);
+    $id = mysql_insert_id($CON);
+    if($id) 
     {
       set_time_limit(25);
-      mysql_query($query,$CON);
-      if ( mysql_error() )
-        echo mysql_error();
+      wp_set_post_categories( $id, array($wp_cat_id) );
 
-      //  $id = wp_insert_post( $j2wp_post );
-
-      $id = mysql_insert_id($CON);
-      if($id) 
-      {
-          wp_set_post_categories( $id, array($wp_cat_id) );
-
-          //  add tags to post
-          $tags = $post_tags[$count];
-          wp_set_post_tags( $id, $tags, false );
-          ++$count;
-      }
+      //  add tags to post
+      $tags = $post_tags[$count];
+      set_time_limit(25);
+      wp_set_post_tags( $id, $tags, false );
+      ++$count;
     }
+  }
 
-    _e( 'Inserted ', 'joomla2wp');
-    echo $count . ' posts<br /><br />';
+  echo '<br />';
+  _e( 'Inserted ', 'joomla2wp');
+  echo $count . ' Posts<br /><br />';
+
+  flush();
+  ob_flush();
 
   return;
 }
@@ -263,9 +347,11 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
           
   $wp_cat_id = $mig_cat_array['wp_id'];
 
+  set_time_limit(25);
   $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
   j2wp_do_joomla_connect();
   $query = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "content` WHERE catid = '" . $mig_cat_array['joomla_id'] . "' ORDER BY `created` LIMIT " . $working_pos . ", " . $working_steps . " ";
+  set_time_limit(25);
   $result = mysql_query($query, $CON);
   if ( !$result )
     echo mysql_error();
@@ -349,9 +435,12 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
       );
 
     $post_tags[] = $R['metakey'];
+    set_time_limit(25);
   }
 
-  echo '<br /> ' . __( 'Processing ', 'joomla2wp') . count($wp_posts) . ' Posts...<br />' . "\n";
+  echo '<br /> ' . __( 'Processing ', 'joomla2wp') . count($wp_posts) . ' Posts...' . "\n";
+  flush();
+  ob_flush();
 
   $result_array[0] = $sql_query;
   $result_array[1] = $wp_posts;
@@ -375,7 +464,7 @@ function joomla2wp_change_urls()
   if ( !$CON )
     $CON = j2wp_do_mysql_connect();
   
-  set_time_limit(25);
+  set_time_limit(0);
 
   $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
   j2wp_do_wp_connect();
@@ -400,7 +489,7 @@ function joomla2wp_change_urls()
         'post_modified' => $row['post_modified'],
         'post_modified_gmt' => $row['post_modified_gmt'],
         'post_title' => $row['post_title'],
-        'post_name' => $row['post_name'],
+        'post_name' => $row['post_name']
         );  
     if ( mysql_error() )
       echo mysql_error();
@@ -411,7 +500,7 @@ function joomla2wp_change_urls()
 
   foreach ( $wp_posts as $j2wp_post )
   {
-    set_time_limit(25);
+    set_time_limit(0);
     //  clear variable 
     $lnk_pos = 0;
     $post_changed = 0;
@@ -554,9 +643,192 @@ function j2wp_change_single_url( $j2wp_post, $lnk_pos )
 }
 
 
+function j2wp_check_mysql_variables()
+{
+  global $j2wp_mysql_vars;
+
+  $CON = j2wp_do_mysql_connect();
+
+  $query = "SHOW VARIABLES LIKE '%_timeout';";
+  $result = mysql_query($query, $CON);
+  if ( !$result )
+    echo mysql_error();
+  else
+  {
+    while ( $row = mysql_fetch_array($result) )
+    { 
+      $j2wp_mysql_vars_temp[] = array(
+              'Variable_name' => $row['Variable_name'],
+              'Value'    => $row['Value']
+              );
+    }
+  }
+  
+  // check for each Variable if SET is possible
+  foreach ( $j2wp_mysql_vars_temp as $mysql_var )
+  {
+    switch( $mysql_var['Variable_name'] )
+    {
+      case 'connect_timeout':
+        $str = 'SET GLOBAL ';
+        $r = j2wp_try_mysql_var_set( $str, $mysql_var['Variable_name'], $mysql_var['Value'] );
+        if ( $r )
+        {
+          $j2wp_mysql_vars[] = array(
+              'Variable_name' => $mysql_var['Variable_name'],
+              'Value'    => $mysql_var['Value'],
+              'str'      => $str
+              );
+        }
+        break;
+      case 'delayed_insert_timeout':
+        $str = 'SET GLOBAL ';
+        $r = j2wp_try_mysql_var_set( $str, $mysql_var['Variable_name'], $mysql_var['Value'] );
+        if ( $r )
+        {
+          $j2wp_mysql_vars[] = array(
+              'Variable_name' => $mysql_var['Variable_name'],
+              'Value'    => $mysql_var['Value'],
+              'str'      => $str
+              );
+        }
+        break;
+      case 'interactive_timeout':
+        $str = 'SET SESSION ';
+        $r = j2wp_try_mysql_var_set( $str, $mysql_var['Variable_name'], $mysql_var['Value'] );
+        if ( $r )
+        {
+          $j2wp_mysql_vars[] = array(
+              'Variable_name' => $mysql_var['Variable_name'],
+              'Value'    => $mysql_var['Value'],
+              'str'      => $str
+              );
+        }
+        break;
+      case 'net_read_timeout':
+        $str = 'SET SESSION ';
+        $r = j2wp_try_mysql_var_set( $str, $mysql_var['Variable_name'], $mysql_var['Value'] );
+        if ( $r )
+        {
+          $j2wp_mysql_vars[] = array(
+              'Variable_name' => $mysql_var['Variable_name'],
+              'Value'    => $mysql_var['Value'],
+              'str'      => $str
+              );
+        }
+        break;
+      case 'net_write_timeout':
+        $str = 'SET SESSION ';
+        $r = j2wp_try_mysql_var_set( $str, $mysql_var['Variable_name'], $mysql_var['Value'] );
+        if ( $r )
+        {
+          $j2wp_mysql_vars[] = array(
+              'Variable_name' => $mysql_var['Variable_name'],
+              'Value'    => $mysql_var['Value'],
+              'str'      => $str
+              );
+        }
+        break;
+      case 'slave_net_timeout':
+        $str = 'SET GLOBAL ';
+        $r = j2wp_try_mysql_var_set( $str, $mysql_var['Variable_name'], $mysql_var['Value'] );
+        if ( $r )
+        {
+          $j2wp_mysql_vars[] = array(
+              'Variable_name' => $mysql_var['Variable_name'],
+              'Value'    => $mysql_var['Value'],
+              'str'      => $str
+              );
+        }
+        break;
+      case 'table_lock_wait_timeout':
+        $str = 'SET GLOBAL ';
+        $r = j2wp_try_mysql_var_set( $str, $mysql_var['Variable_name'], $mysql_var['Value'] );
+        if ( $r )
+        {
+          $j2wp_mysql_vars[] = array(
+              'Variable_name' => $mysql_var['Variable_name'],
+              'Value'    => $mysql_var['Value'],
+              'str'      => $str
+              );
+        }
+        break;
+      case 'wait_timeout':
+        $str = 'SET GLOBAL ';
+        $r = j2wp_try_mysql_var_set( $str, $mysql_var['Variable_name'], $mysql_var['Value'] );
+        if ( $r )
+        {
+          $j2wp_mysql_vars[] = array(
+              'Variable_name' => $mysql_var['Variable_name'],
+              'Value'    => $mysql_var['Value'],
+              'str'      => $str
+              );
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  $_SESSION['j2wp_mysql_vars'] = $j2wp_mysql_vars;
+
+  return $j2wp_mysql_vars;
+}
+
+
+function j2wp_try_mysql_var_set( $str, $Variable_name, $Value )
+{
+  global $CON;
+
+  if ( !$CON )
+    $CON = j2wp_do_mysql_connect();
+  
+  $query = $str . $Variable_name . '=' . $Value . ';';
+  $result = mysql_query($query, $CON);
+  if ( !$result )
+  {
+    // echo mysql_error() . '<br />';
+    return NULL;
+  }
+  else
+    return 1;
+}
+
+
+
+function j2wp_set_mysql_variables()
+{
+  global $j2wp_mysql_vars;
+
+  $error = 0;
+  set_time_limit(0);
+  if ( !$CON )
+    $CON = j2wp_do_mysql_connect();
+
+  $j2wp_mysql_vars = $_SESSION['j2wp_mysql_vars'];
+
+  foreach ( $j2wp_mysql_vars as $var_temp )
+  {
+    $query = $var_temp['str'] . $var_temp['Variable_name'] . '=' . $var_temp['Value'] . ';';
+    $result = mysql_query($query, $CON);
+    if ( !$result )
+    {
+      echo mysql_error();
+      $error = 1;
+    }
+  }
+
+  if ( $error )
+  {
+    _e( '<br />Warning: can not SET MySQL time variables ... script may abort or stop working...<br />', 'joomla2wp');
+  }
+
+  return;
+}
+
 function j2wp_do_mysql_connect()
 {
-  global  $CON;
+  static  $CON = NULL;
   global  $j2wp_mysql_srv,
           $j2wp_mysql_usr,
           $j2wp_mysql_pswd;
@@ -566,7 +838,7 @@ function j2wp_do_mysql_connect()
   $j2wp_mysql_pswd      = get_option("j2wp_mysql_pswd");
      
   // Testing SQL Settings
-  $CON = mysql_connect($j2wp_mysql_srv, $j2wp_mysql_usr, $j2wp_mysql_pswd, null, MYSQL_CLIENT_COMPRESS) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
+  $CON = mysql_connect($j2wp_mysql_srv, $j2wp_mysql_usr, $j2wp_mysql_pswd, 0, MYSQL_CLIENT_COMPRESS) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
 
   return $CON;  
 }
