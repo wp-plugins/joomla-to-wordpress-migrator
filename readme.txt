@@ -66,6 +66,9 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 = 1.1.1 =
 - syntax error fixed in admin.php
 
+= 1.1.2 =
+- mysql connect without MYSQL_CLINET_COMPRESS parameter in joomla2wp-mig.php
+
 
 `<?php code(); // goes in backticks ?>`
 

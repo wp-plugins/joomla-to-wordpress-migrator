@@ -833,7 +833,7 @@ function j2wp_do_mysql_connect()
   $j2wp_mysql_pswd      = get_option("j2wp_mysql_pswd");
      
   // Testing SQL Settings
-  $CON = mysql_connect($j2wp_mysql_srv, $j2wp_mysql_usr, $j2wp_mysql_pswd, 0, MYSQL_CLIENT_COMPRESS) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
+  $CON = mysql_connect($j2wp_mysql_srv, $j2wp_mysql_usr, $j2wp_mysql_pswd, 0) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
 
   return $CON;  
 }
