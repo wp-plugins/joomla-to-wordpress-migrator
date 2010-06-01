@@ -65,11 +65,10 @@ function j2wp_prepare_mig( $func )
                               'id'    => $joomla_cats[$val]['id'],
                               'title' => $joomla_cats[$val]['title']
                               );
-
-        $joomla_cats = $joomla_temp_cats;
-
-        j2wp_do_mig( $joomla_cats );
       }
+
+      j2wp_do_mig( $joomla_temp_cats );
+
       break;
   }
 
@@ -290,8 +289,6 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id 
   $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
   j2wp_do_wp_connect();
 
-  j2wp_set_mysql_variables();
-
   $count = 0;
   //  foreach ($wp_posts as $j2wp_post) 
   foreach ($sql_query as $query) 
@@ -301,7 +298,7 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id 
     flush();
     ob_flush();
     set_time_limit(25);
-    mysql_query($query,$CON);
+    $query_rc = mysql_query($query,$CON);
     if ( mysql_error() )
       echo mysql_error();
 
@@ -451,6 +448,11 @@ function joomla2wp_change_urls()
 {
   global  $wpdb,
           $CON;
+
+
+  j2wp_print_output_page();
+
+  $wp_posts = array();
 
 // check
 // <a href="mortgagecenter/39-news/11548-focus-on-the-6500-tax-credit.html"> $6,500 tax credit.</a>
@@ -629,7 +631,8 @@ function j2wp_change_single_url( $j2wp_post, $lnk_pos )
     }
     else
     {
-      //  check if there is a '.' inside the $last_string and not .html - then it is a attachment
+      //  check if there is a '.' inside the $last_string and not .html - then it is an attachment
+      //  strrpos($last_string, '.')
       echo 'Post ID: ' . $j2wp_post['ID'] . ' link: ' . $post_lnk_string . '<br />'; 
     }
   } 

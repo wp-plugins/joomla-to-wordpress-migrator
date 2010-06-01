@@ -5,7 +5,7 @@ Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
 Tags: joomla, wordpress, migrator, converter
 Requires at least: 2.9.2
 Tested up to: 2.9.2
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 
 A plugin to migrate content from Joomla to Wordpress.
 
@@ -35,9 +35,9 @@ Please take a look at **[Support page](http://it-gnoth.de/projekte/wordpress/wp-
 
 == Frequently Asked Questions ==
 
-1. What I can do if the script stops working during the migration? =
+= A question that someone might have =
 
-Check the timeout settings of your PHP, Apache and MySQL installation and set the values higher.
+An answer to that question.
 
 = What about foo bar? =
 
@@ -72,6 +72,8 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 = 1.1.3 =
 - error fixed in joomla2wp-functions.php
 
+= 1.1.4 =
+- error fixed in joomla2wp-mig.php
 
 `<?php code(); // goes in backticks ?>`
 
