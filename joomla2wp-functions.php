@@ -3,7 +3,7 @@
 Plugin Name: Joomla to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
 Description: migrates all posts from Joomla tables to WP tables
-Version: 1.1.4
+Version: 1.2.0
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -26,7 +26,8 @@ License: GPL2
 */
 
 
-
+ini_set('max_execution_time', 9000); 
+ini_set('mysql.connect_timeout', 9000);
 //  ini_set('display_errors', 1); 
 //  error_reporting(E_ALL);
 
