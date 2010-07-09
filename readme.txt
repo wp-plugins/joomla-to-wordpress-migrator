@@ -4,16 +4,16 @@ Author Uri: http://it-gnoth.de
 Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
 Tags: joomla, wordpress, migrator, converter
 Requires at least: 2.7
-Tested up to: 30 RC3
-Stable tag: 1.2.0
+Tested up to: WP 3.0
+Stable tag: 1.2.1
 
 A plugin to migrate content from Joomla to Wordpress.
 
 == Description ==
 
-Tested with **Joomla 1.5** and **Wordpress 3.0 RC3**
+Tested with **Joomla 1.5** and **Wordpress 3.0**
 
-The Wordpress Installation should be empty !!! No posts, pages or categories !!!
+The Wordpress Installation should be empty !!! No posts, pages or categories !!! Joomla and WP must be on the same MySQL Server !!!
 
 Go to the Plugin Admin Page and fill in the MySQL Connection Parameters !!!
 
@@ -23,7 +23,7 @@ Start the Migration with the button on the Plugin Panel.
 
 After sucessfull migration you can press the "Change Urls" button to change the links in the content of the posts.  
 
-= Support =
+== Support ==
 
 Please take a look at **[Support page](http://it-gnoth.de/projekte/wordpress/wp-support/)** 
 
@@ -35,9 +35,9 @@ Please take a look at **[Support page](http://it-gnoth.de/projekte/wordpress/wp-
 
 == Frequently Asked Questions ==
 
-= A question that someone might have =
+= Can I have Joomla and WP on different MySQL Server? =
 
-An answer to that question.
+NO !!! They must be on the same MySQL Server.
 
 = What about foo bar? =
 
@@ -45,7 +45,8 @@ Answer to foo bar dilemma.
 
 == Screenshots ==
 
-1. screenshot-1.png  Plugin Admin Panel
+1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Note that the screenshot is taken from
+the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1.png` (or jpg, jpeg, gif)
 2. This is the second screen shot
 
 
@@ -76,6 +77,11 @@ Answer to foo bar dilemma.
 
 = 1.2.0 =
 - script stop working problem solved - set php ini values mysql.connect_timeout - now big amount of data no problem
+
+= 1.2.1 =
+- URL change feature extended in functionality - more URLs captured and changed
+- error message flag used - now different error codes
+- error code -70000: MySQL Conncetion Parameters not filled up.
 
 `<?php code(); // goes in backticks ?>`
 

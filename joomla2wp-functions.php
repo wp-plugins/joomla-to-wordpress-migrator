@@ -3,7 +3,7 @@
 Plugin Name: Joomla to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
 Description: migrates all posts from Joomla tables to WP tables
-Version: 1.2.0
+Version: 1.2.1
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -36,11 +36,13 @@ ini_set('mysql.connect_timeout', 9000);
 //  define varaibles to have them in global scope including files and functions
 ////////////////////////////////////////////////////////////////////////////////////////
 $j2wp_mysql_vars = array();
-
+$j2wp_error_flag = 0;
+$ERROR_MSG = array();
 
 
 ob_implicit_flush(1);
 
+include_once( dirname(__FILE__) . '/joomla2wp-config.php');
 include_once( dirname(__FILE__) . '/joomla2wp-output.php');
 include_once( dirname(__FILE__) . '/joomla2wp-mig.php');
 include_once( dirname(__FILE__) . '/joomla2wp-admin.php');
@@ -116,7 +118,8 @@ function register_j2wp_options()
 function joomla2wp_menu()
 {
   global $wpdb;
-  global $joomla_cats;
+  global $joomla_cats,
+         $j2wp_error_flag;
   static $sel_values = 0;
 
   if ( isset( $_POST['j2wp_options_update'] ) )
@@ -156,9 +159,7 @@ function joomla2wp_menu()
 
   if ( isset( $_POST['change_urls_btn'] ) )
   {
-    joomla2wp_change_urls();
-    echo '<div id="message" class="updated fade">';
-    echo '<strong>URLs changed ! </strong>.</div>';
+    $j2wp_error_flag = joomla2wp_change_urls();
   }
 	
   if ( isset( $_POST['do_mig_btn'] ) )
@@ -171,7 +172,7 @@ function joomla2wp_menu()
     }
     else
     {
-      j2wp_prepare_mig( 1 );
+      $j2wp_error_flag = j2wp_prepare_mig( 1 );
     }
   }
 
@@ -189,7 +190,7 @@ function joomla2wp_menu()
 
     if ( $sel_values )
     {
-      j2wp_prepare_mig( $sel_values );
+      $j2wp_error_flag = j2wp_prepare_mig( $sel_values );
     }
     else
     {
@@ -209,6 +210,17 @@ function joomla2wp_menu()
   {
     $_POST['print_cats_sel_page'] = false;
     joomla2wp_print_option_page();
+  }
+
+  switch( $j2wp_error_flag )
+  {
+    case 0:
+      break;
+    case -70000:
+      echo '<div id="message" class="error">';
+      echo '<strong>Please fill up all MySQL Parameters !!!</strong>.</div>';
+      j2wp_print_error_msg();
+      break;
   }
 
   return;
@@ -348,5 +360,21 @@ function joomla2wp_install()
 
     return;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// print error messages
+////////////////////////////////////////////////////////////////////////////////
+function j2wp_print_error_msg()
+{
+  global $j2wp_error_flag,
+         $ERROR_MSG;
+
+  echo '<br /><br /><br />';
+  echo '<div style="font-size:20px;text-align:center;margin:0 auto;"><b>' . $ERROR_MSG[$j2wp_error_flag] . '</b></div>';
+  $j2wp_error_flag = 0;
+
+  return;
+}
+
 
 ?>

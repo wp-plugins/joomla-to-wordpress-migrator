@@ -6,6 +6,7 @@ global  $CON,
 global  $j2wp_mysql_srv,
         $j2wp_mysql_usr,
         $j2wp_mysql_pswd,
+        $j2wp_error_flag,
         $j2wp_joomla_db_name,
         $j2wp_joomla_tb_prefix,
         $j2wp_joomla_web_url,
@@ -24,6 +25,8 @@ function throwERROR($msg)
 
 function j2wp_prepare_mig( $func )
 {
+  global  $j2wp_error_flag;
+
   ob_end_flush();
   ob_start();
   flush();
@@ -36,43 +39,58 @@ function j2wp_prepare_mig( $func )
     $func = 2;
   }
 
-  switch ( $func )
+  // check if Plugin Options are set
+  if ( !((strlen(get_option( 'j2wp_mysql_srv' )) != 0) AND
+       (strlen(get_option( 'j2wp_mysql_usr' )) != 0) AND
+       (strlen(get_option( 'j2wp_mysql_pswd' )) != 0) AND
+       (strlen(get_option( 'j2wp_joomla_db_name' )) != 0) AND
+       (strlen(get_option( 'j2wp_joomla_tb_prefix' )) != 0) AND
+       (strlen(get_option( 'j2wp_wp_db_name' )) != 0) AND
+       (strlen(get_option( 'j2wp_wp_tb_prefix' )) != 0)) )
   {
-    case 1:
-      j2wp_print_output_page();
+    $j2wp_error_flag = -70000;
+  }
+  else
+  {
+    switch ( $func )
+    {
+      case 1:
+        j2wp_print_output_page();
 
-      //  get all cats from joomla
-      $joomla_cats = j2wp_get_joomla_cats();
+        //  get all cats from joomla
+        $joomla_cats = j2wp_get_joomla_cats();
 
-      echo '<br /> Found ' . count($joomla_cats) . ' Categories...<br /><br />' . "\n";
-      flush();
+        echo '<br /> Found ' . count($joomla_cats) . ' Categories...<br /><br />' . "\n";
+        flush();
 
-      j2wp_do_mig( $joomla_cats );
+        j2wp_do_mig( $joomla_cats );
   
-      break;
-    case 2:
-      j2wp_print_output_page();
-      ob_end_flush();
-      ob_start();
+        break;
+      case 2:
+        j2wp_print_output_page();
+        ob_end_flush();
+        ob_start();
 
-      //  get all cats from joomla
-      $joomla_cats = j2wp_get_joomla_cats();
+        //  get all cats from joomla
+        $joomla_cats = j2wp_get_joomla_cats();
 
-      $joomla_temp_cats = array();
-      foreach ( $sel_values as $val )
-      {
-        $joomla_temp_cats[] = array(
+        $joomla_temp_cats = array();
+        foreach ( $sel_values as $val )
+        {
+          $joomla_temp_cats[] = array(
                               'id'    => $joomla_cats[$val]['id'],
                               'title' => $joomla_cats[$val]['title']
                               );
-      }
+        }
 
-      j2wp_do_mig( $joomla_temp_cats );
+        j2wp_do_mig( $joomla_temp_cats );
 
-      break;
+        break;
+    }
+    $j2wp_error_flag = 0;
   }
 
-  return;
+  return $j2wp_error_flag;
 }
 
 
@@ -93,11 +111,15 @@ function j2wp_do_mig( $joomla_cats )
           $j2wp_wp_tb_prefix,
           $j2wp_wp_web_url;
 
+
+  $mtime = microtime(); 
+  $mtime_start = explode(' ',$mtime); 
+
   // setting timelimit
   if ( function_exists('set_time_limit') )
   {
     ignore_user_abort(1);
-    set_time_limit(25);
+    set_time_limit(0);
   }
   else
     _e( '<br />Warning: can not execute set_time_limit() script may abort...<br />', 'joomla2wp');
@@ -126,6 +148,15 @@ function j2wp_do_mig( $joomla_cats )
     j2wp_joomla_wp_posts_by_cat( $mig_cat_array[$index], $index, $user_id );
     $index++;
   }
+
+
+  $mtime = microtime(); 
+  $mtime_end = explode(' ',$mtime); 
+  $totaltime[0] = ($mtime_end[0] - $mtime_start[0]); // microseconds like 0.xxxxxxx
+  $totaltime[1] = ($mtime_end[1] - $mtime_start[1]); 
+
+  echo '<br />' . "\n";
+  echo 'script execution time: ' . $totaltime[1] . ' seconds <br /><br />'; 
 
   echo '<div id="message" class="updated fade">';
   echo '<strong>Migration done </strong>.</div>';
@@ -263,9 +294,9 @@ function  j2wp_joomla_wp_posts_by_cat( $mig_cat_array, $cat_index, $user_id )
   // process all posts in steps
   for ( $i = 0; $i < $working_rounds; $i++)
   {
-    set_time_limit(25);
+    set_time_limit(0);
     $result_array = j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_pos, $user_id);
-
+    sleep(1);
     $working_pos = $working_pos + $working_steps;
 
     $sql_query = $result_array[0];
@@ -285,7 +316,7 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id 
           $CON;
           
 
-  set_time_limit(25);
+  set_time_limit(0);
   $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
   j2wp_do_wp_connect();
 
@@ -295,33 +326,71 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id 
   {
     if ( (($count % 50) == 0) )
       echo '.';
-    flush();
-    ob_flush();
-    set_time_limit(25);
-    $query_rc = mysql_query($query,$CON);
+
+    set_time_limit(0);
+
+    //  set timeout values 
+    $query_cmd  = "SET net_read_timeout = 18000;";
+    $query_rc = mysql_query($query_cmd, $CON);
+    if ( mysql_error() )
+      echo mysql_error();
+    $query_cmd  = "SET net_write_timeout = 18000;";
+    $query_rc = mysql_query($query_cmd, $CON);
     if ( mysql_error() )
       echo mysql_error();
 
+    set_time_limit(0);
+    $query_rc = mysql_query($query,$CON);
+    if ( mysql_error() )
+      echo mysql_error();
+    //  wait for proccessing the sql
+    usleep(10000);
+
+
     //  $id = wp_insert_post( $j2wp_post );
 
-    set_time_limit(25);
+    set_time_limit(0);
     $id = mysql_insert_id($CON);
     if($id) 
     {
-      set_time_limit(25);
       wp_set_post_categories( $id, array($wp_cat_id) );
+      usleep(10);
 
       //  add tags to post
       $tags = $post_tags[$count];
-      set_time_limit(25);
       wp_set_post_tags( $id, $tags, false );
-      ++$count;
+      usleep(10);
+      $count++;
     }
   }
+
+  //  flush tables
+  // $query = 'FLUSH TABLES ' . $j2wp_wp_tb_prefix . 'posts;';
+  // $query_rc = mysql_query($query,$CON);
 
   echo '<br />';
   _e( 'Inserted ', 'joomla2wp');
   echo $count . ' Posts<br /><br />';
+
+/*
+  if ( mysql_error() )
+  {
+    echo 'Could not perform FLUSH TABLES statement!!!  -  MySQL Error: ';
+    echo mysql_error();
+    echo '<br />';
+  }
+*/
+
+  //  enable table indixes
+  $query = 'ALTER TABLE ' . $j2wp_wp_tb_prefix . 'posts ENABLE KEYS;';
+  $query_rc = mysql_query($query,$CON);
+  if ( mysql_error() )
+  {
+    echo 'Could not perform ALTER TABLE statement!!!  -  MySQL Error: ';
+    echo mysql_error();
+    echo '<br />';
+  }
+
 
   flush();
   ob_flush();
@@ -338,26 +407,50 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
           $CON;
           
   $wp_cat_id = $mig_cat_array['wp_id'];
+  $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
 
-  set_time_limit(25);
+  j2wp_do_wp_connect();
+  //  enable table indixes
+  $query = 'ALTER TABLE ' . $j2wp_wp_tb_prefix . 'posts DISABLE KEYS;';
+  $query_rc = mysql_query($query,$CON);
+  if ( mysql_error() )
+  {
+    echo 'Could not perform ALTER TABLE statement!!!  -  MySQL Error: ';
+    echo mysql_error();
+    echo '<br />';
+  }
+
+  set_time_limit(0);
   $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
   j2wp_do_joomla_connect();
-  $query = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "content` WHERE catid = '" . $mig_cat_array['joomla_id'] . "' ORDER BY `created` LIMIT " . $working_pos . ", " . $working_steps . " ";
-  set_time_limit(25);
+
+  unset($result);
+  set_time_limit(0);
+  $query  = "SET net_read_timeout = 18000;";
+  $query_rc = mysql_query($query, $CON);
+  if ( mysql_error() )
+    echo mysql_error();
+  $query  = "SET net_write_timeout = 18000;";
+  $query_rc = mysql_query($query, $CON);
+  if ( mysql_error() )
+    echo mysql_error();
+
+  $query  = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "content` WHERE catid = '" . $mig_cat_array['joomla_id'] . "' ORDER BY `created` LIMIT " . $working_pos . ", " . $working_steps . " ";
   $result = mysql_query($query, $CON);
   if ( !$result )
     echo mysql_error();
-  
+
+  unset($result_array);  
   $sql_query = array();
   $post_tags = array();
   $STORAGE   = array();
   $wp_posts  = array();
 
-  $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
-
   while($R = mysql_fetch_array($result)) 
   {
-    set_time_limit(25);
+    if ( mysql_error() )
+      echo mysql_error();
+    set_time_limit(0);
     // Title is unique so check that it will be used only once
     if ( $R['alias'] )
     {
@@ -427,12 +520,13 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
       );
 
     $post_tags[] = $R['metakey'];
-    set_time_limit(25);
+    set_time_limit(0);
   }
 
   echo '<br /> ' . __( 'Processing ', 'joomla2wp') . count($wp_posts) . ' Posts...' . "\n";
   flush();
   ob_flush();
+  set_time_limit(0);
 
   $result_array[0] = $sql_query;
   $result_array[1] = $wp_posts;
@@ -448,31 +542,44 @@ function joomla2wp_change_urls()
 {
   global  $wpdb,
           $CON;
-
+  global  $j2wp_error_flag;
 
   j2wp_print_output_page();
 
   $wp_posts = array();
 
-// check
-// <a href="mortgagecenter/39-news/11548-focus-on-the-6500-tax-credit.html"> $6,500 tax credit.</a>
-
-
   if ( !$CON )
     $CON = j2wp_do_mysql_connect();
   
-  set_time_limit(0);
+  // setting timelimit
+  if ( function_exists('set_time_limit') )
+  {
+    ignore_user_abort(1);
+    set_time_limit(0);
+  }
+  else
+    _e( '<br />Warning: can not execute set_time_limit() script may abort...<br />', 'joomla2wp');
 
   $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
   j2wp_do_wp_connect();
 
-  //  get all posts with links to joomla categories  ==>  href="/......"
-  $loc_str  = '\'href=' . '"' . '/\'';
-  $loc_str2 = '\'href=' . '"' . '/?p=\'';
-  $query = 'SELECT * FROM ' . $j2wp_wp_tb_prefix . 'posts WHERE ( (LOCATE(' . $loc_str . ', post_content)) AND ' .
-            'NOT (LOCATE(' . $loc_str2 . ', post_content)) ) ';
+  //  get all posts with links to joomla categories  ==>  href="/.........."
+  //                                             or  ==>  href="xxxx......."
+  //                                        but not  ==>  href="http://...."   externe links - not changed
+  //                                        and not  ==>  href="/?p=......."   already point to wordpress posts
+  $loc_str  = '\'href="\'';
+  $loc_str2 = 'href="/?p=';
+  $loc_str3 = 'href="http://';
+  $loc_str4 = 'href="https://';
+  $loc_str5 = 'href="mailto:';
+  $loc_str6 = 'href="image';
+  $loc_str7 = 'href="/image';
+  $loc_str8 = 'href="/"';
+  $loc_str9 = 'href=""';
+
+  $query = 'SELECT * FROM ' . $j2wp_wp_tb_prefix . 'posts WHERE ( LOCATE(' . $loc_str . ', post_content) ) ';
   $post_list = mysql_query($query, $CON);
-  if ( !$post_list )
+  if ( mysql_error() )
     echo mysql_error();
 
   while( $row = mysql_fetch_array($post_list) ) 
@@ -492,29 +599,37 @@ function joomla2wp_change_urls()
       echo mysql_error();
   }
   
-  //  check each post for liks
   echo '<br />' . __( 'The following links must be changed manually:', 'joomla2wp') . ' <br /><br />' . "\n";
 
+  //  check each post for links
   foreach ( $wp_posts as $j2wp_post )
   {
     set_time_limit(0);
-    //  clear variable 
+    //  clear variables 
     $lnk_pos = 0;
     $post_changed = 0;
     //  get pos from href string and check if there are more
-    while ( $lnk_pos = strpos( $j2wp_post['post_content'], 'href="/', $lnk_pos) )
+    while ( $lnk_pos = strpos( $j2wp_post['post_content'], 'href="', $lnk_pos) )
     {
-      //  with each link check if image
-      if ( (!strpos( $j2wp_post['post_content'], 'href="/image', $lnk_pos)) AND
-           (!strpos( $j2wp_post['post_content'], 'href="/"', $lnk_pos)) )
+      //  check if this link is ok or not
+      $j2wp_length = strpos( $j2wp_post['post_content'], '"', $lnk_pos + 7) - $lnk_pos + 1;
+      $j2wp_temp_link = substr( $j2wp_post['post_content'], $lnk_pos, $j2wp_length);
+      if ( (strpos( $j2wp_temp_link, $loc_str2) === false ) AND
+           (strpos( $j2wp_temp_link, $loc_str3) === false ) AND
+           (strpos( $j2wp_temp_link, $loc_str4) === false ) AND
+           (strpos( $j2wp_temp_link, $loc_str5) === false ) AND
+           (strpos( $j2wp_temp_link, $loc_str6) === false ) AND
+           (strpos( $j2wp_temp_link, $loc_str7) === false ) AND
+           (strpos( $j2wp_temp_link, $loc_str8) === false ) AND
+           (strpos( $j2wp_temp_link, $loc_str9) === false )
+         )
       {
         $j2wp_post = j2wp_change_single_url( $j2wp_post, $lnk_pos );
         //  do changes to post
         $post_changed = 1;
       }
-      
-      //  go to position after http:// to check if there is another link in the content
-      $lnk_pos = $lnk_pos + 8;
+      //  go to position after href=" to check if there is another link in the content
+      $lnk_pos = $lnk_pos + 7;
     }
     
     if ( $post_changed )
@@ -530,114 +645,230 @@ function joomla2wp_change_urls()
     }
   }
   
-  return;
+  $j2wp_error_flag = 0;
+
+  echo '<div id="message" class="updated fade"><strong>URLs changed ! </strong>.</div>';
+
+  flush();
+  ob_flush();
+  ob_end_flush();
+
+  return $j2wp_error_flag;
 }
 
 
 function j2wp_change_single_url( $j2wp_post, $lnk_pos )
+{
+  global  $CON,
+          $wpdb;
+  
+  $j2wp_wp_tb_prefix      = get_option('j2wp_wp_tb_prefix');
+  $j2wp_joomla_tb_prefix  = get_option('j2wp_joomla_tb_prefix');
+
+  $permalink = false;
+  $j2wp_url_processed = false;
+
+  //  $lnk_pos         ---> pos at href=" string in post_content
+  //  $post_lnk_end    ---> pos at last " in link string of post_content
+  //  $post_lnk_string ---> contains the whole link string inkl. " at the end
+  $post_lnk_end       = strpos( $j2wp_post['post_content'], '"', $lnk_pos + 7);
+  $post_lnk_string    = substr( $j2wp_post['post_content'], $lnk_pos, $post_lnk_end - $lnk_pos + 1 );
+  if ( !(strrpos( $post_lnk_string, '/') === false) )
+    $pos_lnk_last_slash = strrpos( $post_lnk_string, '/');
+
+  //  urls with structure: href="index.php?option=com_content&view=article&id=9257:2009-fha-loan-limits&catid=52:fha&Itemid=97"
+  if ( !(strpos( $post_lnk_string, 'view=article') === false) )
+  {      
+    $pos_article_id = strpos( $post_lnk_string, 'article&amp;id=') + 15;
+    $article_id = j2wp_extract_number( substr( $post_lnk_string, $pos_article_id ) );   
+
+    $url_post_id = j2wp_get_post_url_for_id( $article_id );
+
+    $permalink = get_permalink( $url_post_id );
+    $j2wp_url_processed = true;
+  }
+
+  //  urls with structure: index.php?option=com_content&view=category&id=49:credit-optimization&layout=blog&Itemid=78
+  if ( (!(strpos( $post_lnk_string, 'view=category') === false)) AND ($j2wp_url_processed === false) )
+  {
+    $pos_cat_id = strpos( $post_lnk_string, 'view=category') + 16;
+    $url_post_id = j2wp_get_post_url_for_cat_id( $article_id );
+
+    $permalink = get_permalink( $url_post_id );
+    $j2wp_url_processed = true;
+  }
+
+  //  urls with structure: index.php?option=com_content&view=section&id=9&layout=blog&Itemid=64
+  if ( strpos( $post_lnk_string, 'view=section') AND ($j2wp_url_processed === false) )
+  {
+    echo 'Post ID: ' . $j2wp_post['ID'] . ' link: ' . $post_lnk_string . '<br />'; 
+    $j2wp_url_processed = true;
+  }
+
+  if ( ($j2wp_url_processed === false) )
+  {
+    //  urls with structure: /82345-fha-loan-limits
+    //                   or  href="mortgagecenter/39-news/11548-focus-on-the-6500-tax-credit.html"
+    $itemid = j2wp_extract_number( substr( $post_lnk_string, $pos_lnk_last_slash + 1 ) );   
+    //  itemid is there - look it joomla for title and creation,modified date    
+    if ( $itemid )
+    {
+      $url_post_id = j2wp_get_post_url_for_id( $itemid );
+
+      $permalink = get_permalink( $url_post_id );
+      $j2wp_url_processed = true;
+    }
+  
+    if ( ($j2wp_url_processed === false) )
+    {
+      //  it is a category or .html or attachment file
+      $link_string        = substr( $post_lnk_string, 7, strlen( $post_lnk_string ) - 8);
+      $pos_lnk_last_slash = strrpos( $link_string, '/'); 
+    
+      //  urls with structure: /glossary
+      //  check if is a category page
+      if (  !strpos($link_string, '.') )
+      {
+        $joomla_cat_title = NULL;
+        // determine the slug 
+        if ( !$pos_lnk_last_slash )
+        {
+          $cat_slug = $link_string;
+        }
+        else
+        {
+          $cat_slug = substr( $link_string, strrpos( $link_string, '/') + 1);
+        }
+        j2wp_do_joomla_connect();
+        // Get the ID of a given category from Joomla
+        $query =  'SELECT id, title, alias FROM ' . $j2wp_joomla_tb_prefix . 'categories WHERE alias = "' . $cat_slug . '" ';
+        $result = mysql_query($query, $CON);
+        if ( !$result )
+          echo mysql_error();
+          
+        while( $row = mysql_fetch_array($result) ) 
+        {
+          $joomla_cat_id = $row['id'];
+          $joomla_cat_title = $row['title'];
+        }
+        if ( $joomla_cat_title )
+        {
+          j2wp_do_wp_connect();
+          if ( $category_id = get_cat_ID( $joomla_cat_title ) )
+          {
+            // Get the URL of this category
+            $permalink = get_category_link( $category_id );
+          }
+          else
+          {
+            // it must be an entry in the jos_content  -  should not happen this else tree
+            echo 'LOOOOK -->  Post ID: ' . $j2wp_post['ID'] . ' link: ' . $post_lnk_string . '<br />'; 
+          }
+        }
+      }
+      else
+      {
+        //  there is a '.' inside the $last_string - check if .html - or an attachment .pdf .jpg .mpeg etc.
+        //  strrpos($last_string, '.')
+        echo 'Post ID: ' . $j2wp_post['ID'] . ' link: ' . $post_lnk_string . '<br />'; 
+      }
+    } 
+  }
+
+  //  update URL String with new content
+  if ( $permalink )
+  {
+    $j2wp_post['post_content'] =  substr( $j2wp_post['post_content'], 0, $lnk_pos) . 'href="' . $permalink . '" ' .
+                                  substr( $j2wp_post['post_content'], $post_lnk_end + 1);
+  }
+
+  return $j2wp_post;
+}
+
+
+function j2wp_get_post_url_for_cat_id( $cat_id )
+{
+  global  $CON,
+          $wpdb;
+
+  $j2wp_wp_tb_prefix      = get_option('j2wp_wp_tb_prefix');
+  $j2wp_joomla_tb_prefix  = get_option('j2wp_joomla_tb_prefix');
+
+  j2wp_do_joomla_connect();
+  // Get Cat title of a given category id from Joomla
+  $query =  'SELECT id, title, alias FROM ' . $j2wp_joomla_tb_prefix . 'categories WHERE id = "' . $cat_id . '" ';
+  $result = mysql_query($query, $CON);
+  if ( !$result )
+    echo mysql_error();
+          
+  while( $row = mysql_fetch_array($result) ) 
+  {
+    $joomla_cat_title = $row['title'];
+  }
+  if ( $joomla_cat_title )
+  {
+    j2wp_do_wp_connect();
+    if ( $category_id = get_cat_ID( $joomla_cat_title ) )
+    {
+      // Get the URL of this category
+      $permalink = get_category_link( $category_id );
+    }
+  }
+
+  return $url_post_id;
+}
+
+
+function j2wp_extract_number( $last_string )
+{
+  $pos = 0;
+  $itemid = '';
+  while ( is_numeric( $last_string[$pos] ) )
+  {
+    $itemid = $itemid . $last_string[$pos]; 
+    $pos++;
+  } 
+
+  return $itemid;
+}
+
+function j2wp_get_post_url_for_id( $itemid )
 {
   global  $CON;
   
   $j2wp_wp_tb_prefix      = get_option('j2wp_wp_tb_prefix');
   $j2wp_joomla_tb_prefix  = get_option('j2wp_joomla_tb_prefix');
 
-  $post_lnk_end       = strpos( $j2wp_post['post_content'], '"', $lnk_pos + 8);
-  $post_lnk_string    = substr( $j2wp_post['post_content'], $lnk_pos, $post_lnk_end - $lnk_pos + 1 );
-  $pos_lnk_last_slash = strrpos( $post_lnk_string, '/');
-
-  //  check if itemid is there
-  $pos = 0;
-  $itemid = '';
-  $last_string = substr( $post_lnk_string, $pos_lnk_last_slash + 1 );
-
-  while ( is_numeric( $last_string[$pos] ) )
-  {
-    $itemid = $itemid . $last_string[$pos]; 
-    $pos = $pos + 1;
-  } 
-
-  //  itemid is there - look it joomla for title and creation,modified date    
-  if ( $itemid )
-  {
-    $itemid_numeric = intval( $itemid );
+  $itemid_numeric = intval( $itemid );
          
-    // get title and creation date/time in Joomla TB
-    $title = '';
-    $date_created = '';
-    j2wp_do_joomla_connect();
-    $query = 'SELECT title, created FROM ' . $j2wp_joomla_tb_prefix . 'content WHERE id = ' . $itemid_numeric;
-    $result = mysql_query($query, $CON);
-    if ( !$result )
-      echo mysql_error();
+  // get title and creation date/time in Joomla TB
+  $title = '';
+  $date_created = '';
+  j2wp_do_joomla_connect();
+  $query = 'SELECT title, created FROM ' . $j2wp_joomla_tb_prefix . 'content WHERE id = ' . $itemid_numeric;
+  $result = mysql_query($query, $CON);
+  if ( !$result )
+    echo mysql_error();
           
-    while ( $joomla_row = mysql_fetch_array($result) ) 
-    {
-      $j2wp_title = $joomla_row['title']; 
-      $j2wp_date_created = $joomla_row['created'];
-    }
-          
-    // get post_id from WP for same title and creation date/time
-    j2wp_do_wp_connect();
-    $query =  'SELECT ID FROM ' . $j2wp_wp_tb_prefix . 'posts WHERE post_title = "' . $j2wp_title . 
-              '" AND post_date = "' . $j2wp_date_created . '"';
-    $result = mysql_query($query, $CON);
-    if ( !$result )
-      echo mysql_error();
-          
-    while ( $row = mysql_fetch_array($result) ) 
-    {
-      $url_post_id = $row['ID'];
-    }
-                                
-    // $permalink = get_permalink( $url_post_id );
-    //  update URL String with new content
-    $j2wp_post['post_content'] =  substr( $j2wp_post['post_content'], 0, $lnk_pos) . 'href="/?p=' . $url_post_id . '" ' .
-                                  substr( $j2wp_post['post_content'], $post_lnk_end + 1);
-  }
-  else
+  while ( $joomla_row = mysql_fetch_array($result) ) 
   {
-    //  it is a category or .html or attachment file
-    $link_string        = substr( $post_lnk_string, 7, strlen( $post_lnk_string ) - 8);
-    $pos_lnk_last_slash = strrpos( $link_string, '/'); 
-    
-    //  check if is a category page
-    if (  !strpos($link_string, '.') )
-    {
-      // determine the slug 
-      if ( !$pos_lnk_last_slash )
-      {
-        $cat_slug = $link_string;
-      }
-      else
-      {
-        $cat_slug = substr( $link_string, strrpos( $link_string, '/') + 1);
-      }
-      j2wp_do_joomla_connect();
-      // Get the ID of a given category from Joomla
-      $query =  'SELECT id, title, alias FROM ' . $j2wp_joomla_tb_prefix . 'categories WHERE alias = "' . $cat_slug . '" ';
-      $result = mysql_query($query, $CON);
-      if ( !$result )
-        echo mysql_error();
+    $j2wp_title = $joomla_row['title'];  
+    $j2wp_date_created = $joomla_row['created'];
+  }
           
-      while( $row = mysql_fetch_array($result) ) 
-      {
-        $joomla_cat_id = $row['id'];
-      }
-      // $category_id = get_cat_ID( $row['title'] );
-      // Get the URL of this category
-      // $category_link = get_category_link( $category_id );
-      $j2wp_post['post_content'] =  substr( $j2wp_post['post_content'], 0, $lnk_pos) . 'href="' . $category_link . '" ' . 
-                                    substr( $j2wp_post['post_content'], $post_lnk_end + 1);
-    }
-    else
-    {
-      //  check if there is a '.' inside the $last_string and not .html - then it is an attachment
-      //  strrpos($last_string, '.')
-      echo 'Post ID: ' . $j2wp_post['ID'] . ' link: ' . $post_lnk_string . '<br />'; 
-    }
-  } 
+  // get post_id from WP for same title and creation date/time
+  j2wp_do_wp_connect();
+  $query =  'SELECT ID FROM ' . $j2wp_wp_tb_prefix . 'posts WHERE post_title = "' . mysql_real_escape_string($j2wp_title) . '" AND post_date = "' . $j2wp_date_created . '"';
+  $result = mysql_query($query, $CON);
+  if ( !$result )
+    echo mysql_error();
+          
+  while ( $row = mysql_fetch_array($result) ) 
+  {
+    $url_post_id = $row['ID'];
+  }
 
-  return $j2wp_post;
+  return $url_post_id;
 }
 
 
