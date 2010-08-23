@@ -4,14 +4,14 @@ Author Uri: http://it-gnoth.de
 Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
 Tags: joomla, wordpress, migrator, converter
 Requires at least: 2.7
-Tested up to: WP 3.0
-Stable tag: 1.2.1
+Tested up to: WP 3.1
+Stable tag: 1.2.2
 
 A plugin to migrate content from Joomla to Wordpress.
 
 == Description ==
 
-Tested with **Joomla 1.5** and **Wordpress 3.0**
+Tested with **Joomla 1.5** and **Wordpress 3.1**
 
 The Wordpress Installation should be empty !!! No posts, pages or categories !!! Joomla and WP must be on the same MySQL Server !!!
 
@@ -82,6 +82,9 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 - URL change feature extended in functionality - more URLs captured and changed
 - error message flag used - now different error codes
 - error code -70000: MySQL Conncetion Parameters not filled up.
+
+= 1.2.2 =
+- SVN Repository problem - files missed, fixed
 
 `<?php code(); // goes in backticks ?>`
 
