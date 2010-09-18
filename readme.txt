@@ -1,19 +1,21 @@
-=== Joomla To Wordpress Migrator ===
+=== Joomla/Mambo To Wordpress Migrator ===
 Contributors: christian_gnoth
 Author Uri: http://it-gnoth.de
 Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
-Tags: joomla, wordpress, migrator, converter
+Tags: joomla, mambo, wordpress, migrator, converter
 Requires at least: 2.7
-Tested up to: WP 3.1
-Stable tag: 1.2.2
+Tested up to: WP 3.0.1
+Stable tag: 1.3.0
 
-A plugin to migrate content from Joomla to Wordpress.
+A plugin to migrate content from Joomla/Mambo to Wordpress.
 
 == Description ==
 
-Tested with **Joomla 1.5** and **Wordpress 3.1**
+Tested with **Joomla 1.5** **Mambo 4.5.2** and **Wordpress 3.1**
 
 The Wordpress Installation should be empty !!! No posts, pages or categories !!! Joomla and WP must be on the same MySQL Server !!!
+
+If you want migrate the images too, copy them into the plugin images folder!!!
 
 Go to the Plugin Admin Page and fill in the MySQL Connection Parameters !!!
 
@@ -85,6 +87,11 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 
 = 1.2.2 =
 - SVN Repository problem - files missed, fixed
+
+= 1.3.0 =
+- tested with mambo 4.5.2
+- added user migration
+- added images migration
 
 `<?php code(); // goes in backticks ?>`
 

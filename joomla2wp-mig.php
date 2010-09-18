@@ -127,6 +127,9 @@ function j2wp_do_mig( $joomla_cats )
   if ( !$CON )
     $CON = j2wp_do_mysql_connect();
 
+  //  migrate all users
+  j2wp_mig_users();
+
   //  check if user adminwp exists
   $user_name = 'adminwp';
   $user_id = username_exists( $user_name );
@@ -136,6 +139,8 @@ function j2wp_do_mig( $joomla_cats )
     $user_id = wp_create_user( $user_name, $random_password, $user_email );
   } 
   
+  echo '<h4>Content Migration</h4><br />' . "\n";
+
   //  create categories in wp and fill category field
   $mig_cat_array = j2wp_create_cat_wp( $joomla_cats );
 
@@ -162,6 +167,53 @@ function j2wp_do_mig( $joomla_cats )
   echo '<strong>Migration done </strong>.</div>';
 
   ob_end_flush();
+
+  return;
+}
+
+
+function j2wp_mig_users()
+{
+  global  $wpdb,
+          $CON;
+          
+
+  if ( !$CON )
+    $CON = j2wp_do_mysql_connect();
+
+  $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
+  j2wp_do_joomla_connect();
+
+  $query = "SELECT name, username, email, password, usertype FROM " . $j2wp_joomla_tb_prefix . "users ";
+  $result = mysql_query($query, $CON);
+  if ( !$result )
+    echo mysql_error();
+  
+  while($row = mysql_fetch_array($result)) 
+  {
+    $joomla_users[] = array(
+                          'name'     => $row['name'],
+                          'username' => $row['username'],
+                          'email'    => $row['email'],
+                          'password' => $row['password'],
+                          'usertype' => $row['usertype']
+                          );
+  }
+  mysql_free_result($result);
+
+  $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
+  j2wp_do_wp_connect();
+
+  echo '<h4>User Migration</h4><br />' . "\n";
+
+  foreach ( $joomla_users as $joomla_user )
+  {
+    echo 'migrate user: ' . $joomla_user['username'] . '   ----  ' . $joomla_user['usertype'] . '<br />' . "\n";
+    $random_password = wp_generate_password( 12, false );
+    $ret = wp_create_user( $joomla_user['username'], $random_password, $joomla_user['email'] );
+  }
+  
+  echo '<br /><br />' . "\n";
 
   return;
 }
@@ -299,17 +351,18 @@ function  j2wp_joomla_wp_posts_by_cat( $mig_cat_array, $cat_index, $user_id )
     sleep(1);
     $working_pos = $working_pos + $working_steps;
 
-    $sql_query = $result_array[0];
-    $wp_posts  = $result_array[1];
-    $post_tags = $result_array[2];
+    $sql_query   = $result_array[0];
+    $wp_posts    = $result_array[1];
+    $post_tags   = $result_array[2];
+    $post_images = $result_array[3];
 
-    j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id );
+    j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_images, $wp_cat_id );
   }
   
   return;
 }
 
-function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id )
+function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_images, $wp_cat_id )
 {
   global  $wpdb,
           $user_id,
@@ -360,6 +413,50 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $wp_cat_id 
       $tags = $post_tags[$count];
       wp_set_post_tags( $id, $tags, false );
       usleep(10);
+
+      //  add attachment to post
+      $joomla_img_folder       = get_option('j2wp_joomla_images_folder');
+      $joomla_path             = get_option('j2wp_joomla_images_path');
+      $array_count  = count($post_images[$count]);
+      $images_count = intval($array_count / 6);
+      $images       = explode("|", $post_images[$count]);
+      $images_items = array();
+      for ( $i=0; $i < $images_count; $i++ )
+      {
+        $images_items[$i]['filename'] = $images[$i * 0];
+        $images_items[$i]['align']    = $images[$i * 1];
+        $images_items[$i]['title']    = $images[$i * 2];
+        $images_items[$i]['3']        = $images[$i * 3];
+        $images_items[$i]['alt']      = $images[$i * 4];
+        $images_items[$i]['5']        = $images[$i * 5];
+        $images_items[$i]['6']        = $images[$i * 6];
+        $images_items[$i]['7']        = $images[$i * 7];
+
+        // asterisk.png|left|Mambo Logo|1|Mambo Flower Logo|bottom|center|120
+      }
+      foreach ( $images_items as $image_item )
+      {
+        $filename = JTWPDIR . '/images/' . $image_item['filename'];
+        echo '<br />' . $filename . '<br />';
+        $wp_filetype = wp_check_filetype(basename($filename), null );
+        echo '<br />' . $wp_filetype . '<br />';
+        $attachment  = array(
+           'post_mime_type' => $wp_filetype['type'],
+           'post_title'     => preg_replace('/\.[^.]+$/', '', basename($filename)),
+           'post_content'   => '',
+           'post_status'    => 'inherit'
+           );
+
+        //  copy($joomla_path ."/images/stories/". $filename, file_directory_path() ."/$joomla_img_folder/". $filename);
+
+        $attach_id = wp_insert_attachment( $attachment, $filename, $id );
+        // you must first include the image.php file
+        // for the function wp_generate_attachment_metadata() to work
+        require_once(ABSPATH . "wp-admin" . '/includes/image.php');
+        $attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
+        wp_update_attachment_metadata( $attach_id,  $attach_data );
+      }
+
       $count++;
     }
   }
@@ -406,10 +503,14 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
           $user_id,
           $CON;
           
+  j2wp_do_wp_connect();
+
   $wp_cat_id = $mig_cat_array['wp_id'];
   $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
 
-  j2wp_do_wp_connect();
+  $wp_img_folder       = get_option('j2wp_wp_images_folder');
+  $wp_blog_url         = get_option('j2wp_wp_web_url');
+
   //  enable table indixes
   $query = 'ALTER TABLE ' . $j2wp_wp_tb_prefix . 'posts DISABLE KEYS;';
   $query_rc = mysql_query($query,$CON);
@@ -435,7 +536,11 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
   if ( mysql_error() )
     echo mysql_error();
 
-  $query  = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "content` WHERE catid = '" . $mig_cat_array['joomla_id'] . "' ORDER BY `created` LIMIT " . $working_pos . ", " . $working_steps . " ";
+  $query  = "SELECT tbla.title, tbla.alias, tbla.title_alias, " .
+            " tbla.introtext, tbla.fulltext, tbla.created, tbla.created_by, " .
+            " tbla.modified, tbla.modified_by, tbla.images, " .
+            " tbla.urls, tbla.attribs, tbla.parentid, tbla.metakey, tbla.metadesc, " . 
+            " tblb.id, tblb.name, tblb.username, tblb.email, tblb.password, tblb.usertype FROM `" . $j2wp_joomla_tb_prefix . "content` tbla, `" . $j2wp_joomla_tb_prefix . "users` tblb WHERE catid = '" . $mig_cat_array['joomla_id'] . "' AND tblb.id = tbla.created_by ORDER BY `created` LIMIT " . $working_pos . ", " . $working_steps . " ";
   $result = mysql_query($query, $CON);
   if ( !$result )
     echo mysql_error();
@@ -443,50 +548,116 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
   unset($result_array);  
   $sql_query = array();
   $post_tags = array();
+  $post_images = array();
   $STORAGE   = array();
   $wp_posts  = array();
 
-  while($R = mysql_fetch_array($result)) 
+  while($R = mysql_fetch_object($result)) 
   {
     if ( mysql_error() )
       echo mysql_error();
     set_time_limit(0);
     // Title is unique so check that it will be used only once
-    if ( $R['alias'] )
+    if ( $R->alias )
     {
-      $tmp = $R['alias'];
+      $tmp = $R->alias;
       if ( $STORAGE[$tmp] == true )
-        $R['alias'] = $R['alias'] . "-II";
-      $tmp = $R['alias'];
+        $R->alias = $R->alias . "-II";
+      $tmp = $R->alias;
       $STORAGE[$tmp] = true;
     }
     else
     {
-      $R['alias'] = sanitize_title($R['title']); 
+      $R->alias = sanitize_title($R->title); 
     }
 
-    $array = array(
-        "post_author" => $user_id,
-        "post_parent" => intval($wp_cat_id),
-        "post_date"=>$R['created'],
-        "post_date_gmt"=>$R['created'],
-        "post_modified"=>$R['modified'],
-        "post_modified_gmt"=>$R['modified'],
-        "post_title"=>$R['title'],
-        "post_status"=>"publish",
-        "comment_status"=>"open",
-        "ping_status"=>"open",
-        "post_name"=>$R['alias'],
-        "post_type"=>"post"
-      );
-    if($R['fulltext'] AND $R['introtext'])
-      $array["post_content"] = $R["introtext"] . '<br /><!--more--><br />' . $R["fulltext"]; 
-    elseif($R['introtext'] AND !$R['fulltext'])
-      $array["post_content"] = $R['introtext'];
+    if($R->fulltext AND $R->introtext)
+      $post_content = $R->introtext . '<br /><!--more--><br />' . $R->fulltext; 
+    elseif($R->introtext AND !$R->fulltext)
+      $post_content = $R->introtext;
     
     // Content Filter
-    $array["post_content"] = str_replace('<hr id="system-readmore" />',"<!--more-->",$array["post_content"]);
-    $array["post_content"] = str_replace('src="images/','src="/images/',$array["post_content"]);
+    $post_content = str_replace('<hr id="system-readmore" />',"<!--more-->",$post_content);
+    $post_content = str_replace('src="images/','src="/images/',$post_content);
+
+    // find all {mosimage} and replace
+    $image_string = '{mosimage}';
+
+    $array_count  = count($R->images);
+    $images_count = intval($array_count / 6);
+    $images       = explode("|", $R->images);
+    for ( $i=0; $i < $images_count; $i++ )
+    {
+      $images_items[$i]['filename'] = $images[$i * 0];
+      $images_items[$i]['align']    = $images[$i * 1];
+      $images_items[$i]['title']    = $images[$i * 2];
+      $images_items[$i]['3']        = $images[$i * 3];
+      $images_items[$i]['alt']      = $images[$i * 4];
+      $images_items[$i]['5']        = $images[$i * 5];
+      $images_items[$i]['6']        = $images[$i * 6];
+      $images_items[$i]['7']        = $images[$i * 7];
+      // asterisk.png|left|Mambo Logo|1|Mambo Flower Logo|bottom|center|120
+    }
+
+    $pos  = 0;
+    $indx = 0;
+    while( !(strpos( $post_content, $pos) === false) )
+    {
+      $images_replace = '<img src="' . $wp_blog_url . $wp_img_folder . '/'. $images_items[$indx]['filename'] .'"'
+                       .' align="'. $images_items[$indx]['align'] .'" title="'. $images_items[$indx]['title'] .'" alt="'. $images_items[$indx]['title'] .'"/>';
+      $pos = strpos( $post_content, $pos);
+      $post_content = substr_replace( $post_content, $images_replace, $pos, 10);
+      $pos++;
+      $indx++;
+    }
+
+    $wp_posts[] = array(
+        'post_author' => $R->username,
+        'post_category' => array($wp_cat_id),
+        'post_content' => $post_content, 
+        'post_date' => $R->created,
+        'post_date_gmt' => $R->created,
+        'post_modified' => $R->modified,
+        'post_modified_gmt' => $R->modified,
+        'post_title' => $R->title,
+        'post_status' => 'publish',
+        'comment_status' => 'open',
+        'ping_status' => 'open',
+        'post_name' => $R->alias,
+        'tags_input' => $R->metakey, 
+        'post_type' => 'post'
+      );
+
+    $post_tags[]   = $R->metakey;
+    $post_images[] = $R->images;
+    set_time_limit(0);
+  }
+  mysql_free_result($result);
+
+  $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
+  j2wp_do_wp_connect();
+
+  foreach ( $wp_posts as &$item )
+  {
+    //  get user id from wp
+    $user_id = username_exists( $item['post_author'] );
+    $item['post_author'] = $user_id;
+
+    $array = array(
+        "post_author"       => $user_id,
+        "post_parent"       => intval($wp_cat_id),
+        "post_content"      => $item['post_content'],
+        "post_date"         => $item['post_date'],
+        "post_date_gmt"     => $item['post_date_gmt'],
+        "post_modified"     => $item['post_modified'],
+        "post_modified_gmt" => $item['post_modified_gmt'],
+        "post_title"        => $item['post_title'],
+        "post_status"       => $item['post_status'],
+        "comment_status"    => $item['comment_status'],
+        "ping_status"       => $item['ping_status'],
+        "post_name"         => $item['post_name'],
+        "post_type"         => $item['post_type']
+      );
 
     $insert_sql = "INSERT INTO " . $j2wp_wp_tb_prefix . "posts" . " set ";
     $inserted = 0;
@@ -501,26 +672,6 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
       }
     }    
     $sql_query[] = $insert_sql;
-
-    $wp_posts[] = array(
-        'post_author' => $user_id,
-        'post_category' => array($wp_cat_id),
-        'post_content' => $array['post_content'], 
-        'post_date' => $R['created'],
-        'post_date_gmt' => $R['created'],
-        'post_modified' => $R['modified'],
-        'post_modified_gmt' => $R['modified'],
-        'post_title' => $R['title'],
-        'post_status' => 'publish',
-        'comment_status' => 'open',
-        'ping_status' => 'open',
-        'post_name' => $R['alias'],
-        'tags_input' => $R['metakey'], 
-        'post_type' => 'post'
-      );
-
-    $post_tags[] = $R['metakey'];
-    set_time_limit(0);
   }
 
   echo '<br /> ' . __( 'Processing ', 'joomla2wp') . count($wp_posts) . ' Posts...' . "\n";
@@ -531,8 +682,7 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
   $result_array[0] = $sql_query;
   $result_array[1] = $wp_posts;
   $result_array[2] = $post_tags;
-
-  mysql_free_result($result);
+  $result_array[3] = $post_images;
 
   return $result_array;
 }

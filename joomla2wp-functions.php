@@ -1,9 +1,9 @@
 <?php
 /*
-Plugin Name: Joomla to WP Migrator
+Plugin Name: Joomla/Mambo to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
-Description: migrates all posts from Joomla tables to WP tables
-Version: 1.2.2
+Description: migrates all posts from Joomla/Mambo tables to WP tables
+Version: 1.3.0
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -47,6 +47,7 @@ include_once( dirname(__FILE__) . '/joomla2wp-output.php');
 include_once( dirname(__FILE__) . '/joomla2wp-mig.php');
 include_once( dirname(__FILE__) . '/joomla2wp-admin.php');
 
+define('JTWPURL', WP_PLUGIN_URL . '/' . str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) );
 define('JTWPDIR', WP_PLUGIN_URL . '/' . str_replace(basename( __FILE__),"",plugin_basename(__FILE__)) );
 
 
@@ -74,9 +75,9 @@ load_plugin_textdomain( 'joomla2wp', '', $plugin_path );
 function j2wp_load_css()
 {
   echo 	"\n\n";
-  echo 	'<!-- Joomla to Wordpress Converter - Plugin Option CSS -->' . "\n";
-  echo 	'<link rel="stylesheet" type="text/css" media="all" href="' . JTWPDIR . 'css/plugin-option.css" />';
-  echo 	'<!-- Joomla to Wordpress Converter - Plugin Directory Variable -->' . "\n";
+  echo 	'<!-- Joomla/Mambo to Wordpress Converter - Plugin Option CSS -->' . "\n";
+  echo 	'<link rel="stylesheet" type="text/css" media="all" href="' . JTWPURL . 'css/plugin-option.css" />';
+  echo 	'<!-- Joomla/Mambo to Wordpress Converter - Plugin Directory Variable -->' . "\n";
   echo  '<script type="text/javascript">/* <![CDATA[ */' . "\n";
   echo  '   var plugin_dir_url = "' . plugin_dir_url( __FILE__ ) . '";' . "\n";
   echo  ' /* ]]> */</script>' . "\n";
@@ -102,9 +103,12 @@ function register_j2wp_options()
   add_option( 'j2wp_mysql_pswd', '' );
   add_option( 'j2wp_joomla_db_name', '' );
   add_option( 'j2wp_joomla_tb_prefix', 'jos_' );
+  add_option( 'j2wp_joomla_images_path', '' );
+  add_option( 'j2wp_joomla_images_folder', '/images/stories' );
   add_option( 'j2wp_joomla_web_url', '' );
   add_option( 'j2wp_wp_db_name', '' );
   add_option( 'j2wp_wp_tb_prefix', 'wp_' );
+  add_option( 'j2wp_wp_images_folder', '/wp-content/themes/twentyten/images' );
   add_option( 'j2wp_wp_web_url', '' );
 //  register_setting( 'joomla2wp', 'j2wp_mysql_usr', 'localhost' );
 //  register_setting( 'joomla2wp', 'j2wp_mysql_srv', 'localhost' );
@@ -238,6 +242,8 @@ function joomla2wp_get_options()
           $j2wp_mysql_change_vars,
           $j2wp_joomla_db_name,
           $j2wp_joomla_tb_prefix,
+          $j2wp_joomla_images_path,
+          $j2wp_joomla_images_folder,
           $j2wp_joomla_web_url,
           $j2wp_wp_db_name,
           $j2wp_wp_tb_prefix,
@@ -249,9 +255,12 @@ function joomla2wp_get_options()
   $j2wp_mysql_pswd      = get_option("j2wp_mysql_pswd");
   $j2wp_joomla_db_name  =	get_option('j2wp_joomla_db_name');
   $j2wp_joomla_tb_prefix  =	get_option('j2wp_joomla_tb_prefix');
+  $j2wp_joomla_images_path  =	get_option('j2wp_joomla_images_path');
+  $j2wp_joomla_images_folder  =	get_option('j2wp_joomla_images_folder');
   $j2wp_joomla_web_url  =	get_option('j2wp_joomla_web_url');
   $j2wp_wp_db_name      =	get_option('j2wp_wp_db_name');
   $j2wp_wp_tb_prefix    =	get_option('j2wp_wp_tb_prefix');
+  $j2wp_wp_images_folder =	get_option('j2wp_wp_images_folder');
   $j2wp_wp_web_url      =	get_option('j2wp_wp_web_url');
 
   return;
@@ -321,9 +330,12 @@ function update_j2wp_options()
   update_option( 'j2wp_mysql_pswd', $_POST['new_j2wp_mysql_pswd'] );
   update_option( 'j2wp_joomla_db_name', $_POST['new_j2wp_joomla_db_name'] );
   update_option( 'j2wp_joomla_tb_prefix', $_POST['new_j2wp_joomla_tb_prefix'] );
+  update_option( 'j2wp_joomla_images_path', $_POST['new_j2wp_joomla_images_path'] );
+  update_option( 'j2wp_joomla_images_folder', $_POST['new_j2wp_joomla_images_folder'] );
   update_option( 'j2wp_joomla_web_url', $_POST['new_j2wp_joomla_web_url'] );
   update_option( 'j2wp_wp_db_name', $_POST['new_j2wp_wp_db_name'] );
   update_option( 'j2wp_wp_tb_prefix', $_POST['new_j2wp_wp_tb_prefix'] );
+  update_option( 'j2wp_wp_images_folder', $_POST['new_j2wp_wp_images_folder'] );
   update_option( 'j2wp_wp_web_url', $_POST['new_j2wp_wp_web_url'] );
 
   echo '<div id="message" class="updated fade">';

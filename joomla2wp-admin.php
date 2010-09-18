@@ -10,6 +10,8 @@ function joomla2wp_print_option_page()
           $j2wp_mysql_change_vars,
           $j2wp_joomla_db_name,
           $j2wp_joomla_tb_prefix,
+          $j2wp_joomla_images_path,
+          $j2wp_joomla_images_folder,
           $j2wp_joomla_web_url,
           $j2wp_wp_db_name,
           $j2wp_wp_tb_prefix,
@@ -54,13 +56,20 @@ function joomla2wp_print_option_page()
   '    <h2>Joomla To WordPress Migrator</h2>' . "\n" .
   '    <form id="j2wp_plugin_options_form" action="" method="post">' . "\n" .
   '      <br /><hr />' . "\n" .
-  '      ' . __( 'This Plugin migrates all content from Joomla 1.5 to Wordpress 2.9', 'joomla2wp') . "\n" .
+  '      ' . __( 'This Plugin migrates all content from Joomla 1.5 to Wordpress 3', 'joomla2wp') . "\n" .
   '      <br /><hr />' . "\n" .
   '      <p class="submit">' . "\n" .
   '        <input type="submit" name="j2wp_options_update" value="Update Options &raquo;" />' . "\n" .
   '        <br />' . "\n" .
   '      </p>' . "\n";
 
+  echo 
+  '      <div id="plugin_option_set">' . "\n" .
+  '      <p>' . "\n" .
+  '        <b>Before you start the migration, please copy all your images from Joomla to the Plugin Images Directory!!!</b><br />' . "\n" .
+  '        This is needed so that wordpress can determine the correct mime type of the images.' . "\n" .
+  '      </p>' . "\n" .
+  '      </div><br />' . "\n";
 
   echo '      <br />' . "\n" .
   '      <fieldset>' . "\n" .
@@ -113,6 +122,22 @@ function joomla2wp_print_option_page()
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
   '            <td>' . "\n" .
+  '              Joomla Images Path:' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <input type="text" size="25" name="new_j2wp_joomla_images_path" value="' . get_option("j2wp_joomla_images_path" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
+  '              Joomla Images folder:' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <input type="text" size="25" name="new_j2wp_joomla_images_folder" value="' . get_option("j2wp_joomla_images_folder" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
   '              Joomla Website URL:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
@@ -136,6 +161,21 @@ function joomla2wp_print_option_page()
   '            </td>' . "\n" .
   '            <td>' . "\n" .
   '              <input type="text" size="10" name="new_j2wp_wp_tb_prefix" value="' . get_option("j2wp_wp_tb_prefix" ) . '" />    (<i>normally wp_</i>)' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
+  '              WP Images folder:' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <input type="text" size="40" name="new_j2wp_wp_images_folder" value="' . get_option("j2wp_wp_images_folder" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              No forward slash on the end of the folder !!!' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
