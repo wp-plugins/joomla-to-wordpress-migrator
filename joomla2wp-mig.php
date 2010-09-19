@@ -7,6 +7,7 @@ global  $j2wp_mysql_srv,
         $j2wp_mysql_usr,
         $j2wp_mysql_pswd,
         $j2wp_error_flag,
+        $j2wp_user_array,
         $j2wp_joomla_db_name,
         $j2wp_joomla_tb_prefix,
         $j2wp_joomla_web_url,
@@ -104,6 +105,7 @@ function j2wp_do_mig( $joomla_cats )
   global  $j2wp_mysql_srv,
           $j2wp_mysql_usr,
           $j2wp_mysql_pswd,
+          $j2wp_user_array,
           $j2wp_joomla_db_name,
           $j2wp_joomla_tb_prefix,
           $j2wp_joomla_web_url,
@@ -128,7 +130,7 @@ function j2wp_do_mig( $joomla_cats )
     $CON = j2wp_do_mysql_connect();
 
   //  migrate all users
-  j2wp_mig_users();
+  $j2wp_user_array = j2wp_mig_users();
 
   //  check if user adminwp exists
   $user_name = 'adminwp';
@@ -177,6 +179,7 @@ function j2wp_mig_users()
   global  $wpdb,
           $CON;
           
+  global  $j2wp_user_array;
 
   if ( !$CON )
     $CON = j2wp_do_mysql_connect();
@@ -184,14 +187,15 @@ function j2wp_mig_users()
   $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
   j2wp_do_joomla_connect();
 
-  $query = "SELECT name, username, email, password, usertype FROM " . $j2wp_joomla_tb_prefix . "users ";
+  $query = "SELECT id, name, username, email, password, usertype FROM " . $j2wp_joomla_tb_prefix . "users ";
   $result = mysql_query($query, $CON);
   if ( !$result )
     echo mysql_error();
   
   while($row = mysql_fetch_array($result)) 
   {
-    $joomla_users[] = array(
+    $j2wp_user_array[] = array(
+                          'id'       => $row['id'],
                           'name'     => $row['name'],
                           'username' => $row['username'],
                           'email'    => $row['email'],
@@ -206,7 +210,7 @@ function j2wp_mig_users()
 
   echo '<h4>User Migration</h4><br />' . "\n";
 
-  foreach ( $joomla_users as $joomla_user )
+  foreach ( $j2wp_user_array as $joomla_user )
   {
     echo 'migrate user: ' . $joomla_user['username'] . '   ----  ' . $joomla_user['usertype'] . '<br />' . "\n";
     $random_password = wp_generate_password( 12, false );
@@ -215,7 +219,7 @@ function j2wp_mig_users()
   
   echo '<br /><br />' . "\n";
 
-  return;
+  return $j2wp_user_array;
 }
 
 
@@ -503,10 +507,13 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
           $user_id,
           $CON;
           
+  global  $j2wp_user_array;
+
   j2wp_do_wp_connect();
 
   $wp_cat_id = $mig_cat_array['wp_id'];
   $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
+  $j2wp_cms_type     = get_option('j2wp_cms_type');
 
   $wp_img_folder       = get_option('j2wp_wp_images_folder');
   $wp_blog_url         = get_option('j2wp_wp_web_url');
@@ -536,11 +543,17 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
   if ( mysql_error() )
     echo mysql_error();
 
-  $query  = "SELECT tbla.title, tbla.alias, tbla.title_alias, " .
-            " tbla.introtext, tbla.fulltext, tbla.created, tbla.created_by, " .
-            " tbla.modified, tbla.modified_by, tbla.images, " .
-            " tbla.urls, tbla.attribs, tbla.parentid, tbla.metakey, tbla.metadesc, " . 
-            " tblb.id, tblb.name, tblb.username, tblb.email, tblb.password, tblb.usertype FROM `" . $j2wp_joomla_tb_prefix . "content` tbla, `" . $j2wp_joomla_tb_prefix . "users` tblb WHERE catid = '" . $mig_cat_array['joomla_id'] . "' AND tblb.id = tbla.created_by ORDER BY `created` LIMIT " . $working_pos . ", " . $working_steps . " ";
+  switch ( $j2wp_cms_type )
+  {
+    case '0':
+      $query  = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "content` WHERE catid = '" . $mig_cat_array['joomla_id'] . "' ORDER BY `created` LIMIT " . $working_pos . ", " . $working_steps . " ";
+      break;
+    case '1':
+      $query  = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "content` WHERE catid = '" . $mig_cat_array['joomla_id'] . "' ORDER BY `created` LIMIT " . $working_pos . ", " . $working_steps . " ";
+      break;
+    default:
+      break;
+  }
   $result = mysql_query($query, $CON);
   if ( !$result )
     echo mysql_error();
@@ -552,11 +565,13 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
   $STORAGE   = array();
   $wp_posts  = array();
 
+  $post_counter = 0;
   while($R = mysql_fetch_object($result)) 
   {
     if ( mysql_error() )
       echo mysql_error();
     set_time_limit(0);
+
     // Title is unique so check that it will be used only once
     if ( $R->alias )
     {
@@ -611,8 +626,11 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
       $indx++;
     }
 
+    //  get username
+    $key = array_search ( $R->created_by , $j2wp_user_array); 
+
     $wp_posts[] = array(
-        'post_author' => $R->username,
+        'post_author' => $j2wp_user_array[$key]['username'],
         'post_category' => array($wp_cat_id),
         'post_content' => $post_content, 
         'post_date' => $R->created,

@@ -30,8 +30,16 @@ function joomla2wp_print_option_page()
   echo '  </div>' . "\n";
 */
 
+  $j2wp_cms_types = array(
+        '0'  => 'Joomla',
+        '1'  => 'Mambo'
+        );
+
   // get the options
-  $cat_sel = get_option("j2wp_cat_sel");
+  $j2wp_cms_type     = get_option('j2wp_cms_type');
+  $cat_sel           = get_option("j2wp_cat_sel");
+  $mysql_change_vars = get_option("j2wp_mysql_change_vars");
+
   if ( $cat_sel == 'on' )
   {
     $cat_sel_checkbox = ' checked="checked" ';
@@ -41,7 +49,6 @@ function joomla2wp_print_option_page()
     $cat_sel_checkbox = ' ';
   }
 
-  $mysql_change_vars = get_option("j2wp_mysql_change_vars");
   if ( $mysql_change_vars == 'on' )
   {
     $mysql_change_vars_checkbox = ' checked="checked" ';
@@ -53,10 +60,10 @@ function joomla2wp_print_option_page()
 
 
   echo '  <div class="wrap">' . "\n" .
-  '    <h2>Joomla To WordPress Migrator</h2>' . "\n" .
+  '    <h2>' . $j2wp_cms_types[$j2wp_cms_type] . ' To WordPress Migrator</h2>' . "\n" .
   '    <form id="j2wp_plugin_options_form" action="" method="post">' . "\n" .
   '      <br /><hr />' . "\n" .
-  '      ' . __( 'This Plugin migrates all content from Joomla 1.5 to Wordpress 3', 'joomla2wp') . "\n" .
+  '      ' . __( 'This Plugin migrates all content from Joomla/Mambo to Wordpress', 'joomla2wp') . "\n" .
   '      <br /><hr />' . "\n" .
   '      <p class="submit">' . "\n" .
   '        <input type="submit" name="j2wp_options_update" value="Update Options &raquo;" />' . "\n" .
@@ -66,10 +73,37 @@ function joomla2wp_print_option_page()
   echo 
   '      <div id="plugin_option_set">' . "\n" .
   '      <p>' . "\n" .
-  '        <b>Before you start the migration, please copy all your images from Joomla to the Plugin Images Directory!!!</b><br />' . "\n" .
+  '        <b>Before you start the migration, please copy all your images from Joomla/Mambo to the Plugin Images Directory!!!</b><br />' . "\n" .
   '        This is needed so that wordpress can determine the correct mime type of the images.' . "\n" .
   '      </p>' . "\n" .
   '      </div><br />' . "\n";
+
+  echo '      <br />' . "\n" .
+  '      <fieldset>' . "\n" .
+  '        <h3>CMS Selection</h3>' . "\n" .
+  '        <div id="plugin_option_set">' . "\n" .
+  '          <table>' . "\n" .
+  '          <tr><th class="j2wp_option_left_part"><label for="">' . __('Type of CMS:', 'joomla2wp') . '</label></th>' . "\n" .
+  '              <td>&nbsp;&nbsp;</td>' . "\n" .
+  '              <td><ul><li>' . "\n";
+
+  foreach( $j2wp_cms_types as $key => $value)
+  {
+    if ( $j2wp_cms_type == $key )
+      $checked = ' checked="checked" ';
+    else
+      $checked = ' ';
+    echo '      <input type="radio" class="j2wp-radio" name="new_j2wp_cms_type" id="j2wp_cms_type_' . $key . '" value="' . $key . '"' . $checked . ' />' . "\n";
+    echo '      <label for="j2wp_cms_type_' . $key . '">' . $value . '</label>' . "\n";
+  }
+
+  echo
+  '            </li></ul></td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          </table>' . "\n" .
+  '        </div>' . "\n" .
+  '      </fieldset>' . "\n" .
+  '      <br />' . "\n";
 
   echo '      <br />' . "\n" .
   '      <fieldset>' . "\n" .

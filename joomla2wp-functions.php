@@ -3,7 +3,7 @@
 Plugin Name: Joomla/Mambo to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
 Description: migrates all posts from Joomla/Mambo tables to WP tables
-Version: 1.3.0
+Version: 1.3.1
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -97,6 +97,7 @@ function register_j2wp_options()
 
   //  add options
   add_option( 'j2wp_mysql_change_vars', 'off' );
+  add_option( 'j2wp_cms_type', '0' );
   add_option( 'j2wp_cat_sel', 'on' );
   add_option( 'j2wp_mysql_srv', 'localhost' );
   add_option( 'j2wp_mysql_usr', '' );
@@ -250,6 +251,8 @@ function joomla2wp_get_options()
           $j2wp_wp_web_url;
 
   $j2wp_mysql_change_vars = get_option("j2wp_mysql_change_vars");
+  $j2wp_cat_sel         = get_option('j2wp_cat_sel');
+  $j2wp_cms_type        = get_option("j2wp_cms_type");
   $j2wp_mysql_srv       = get_option("j2wp_mysql_srv");
   $j2wp_mysql_usr       = get_option("j2wp_mysql_usr");
   $j2wp_mysql_pswd      = get_option("j2wp_mysql_pswd");
@@ -324,6 +327,7 @@ function update_j2wp_options()
   }
 
   update_option( 'j2wp_mysql_change_vars', $_POST['new_j2wp_mysql_change_vars'] );
+  update_option( 'j2wp_cms_type', $_POST['new_j2wp_cms_type'] );
   update_option( 'j2wp_cat_sel', $_POST['new_j2wp_cat_sel'] );
   update_option( 'j2wp_mysql_srv', $_POST['new_j2wp_mysql_srv'] );
   update_option( 'j2wp_mysql_usr', $_POST['new_j2wp_mysql_usr'] );
