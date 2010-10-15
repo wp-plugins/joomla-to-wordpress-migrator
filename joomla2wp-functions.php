@@ -3,7 +3,7 @@
 Plugin Name: Joomla/Mambo to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
 Description: migrates all posts from Joomla/Mambo tables to WP tables
-Version: 1.3.1
+Version: 1.3.2
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -348,6 +348,8 @@ function update_j2wp_options()
 	return;
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
 function joomla2wp_admin_actions()
 {
   add_options_page("Joomla2WP Migrator options", "Joomla2WP", 1, "Joomla2WP", "joomla2wp_menu");
@@ -355,6 +357,7 @@ function joomla2wp_admin_actions()
   return;    
 }
 
+////////////////////////////////////////////////////////////////////////////////
 function joomla2wp_deinstall()
 {
   global $wpdb;
@@ -365,16 +368,17 @@ function joomla2wp_deinstall()
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
 function joomla2wp_install()
 {
-    global $wpdb;
+  global $wpdb;
 
-    register_j2wp_options();
+  register_j2wp_options();
 
-		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-		dbDelta($sql);
+  require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+  dbDelta($sql);
 
-    return;
+  return;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

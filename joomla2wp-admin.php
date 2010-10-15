@@ -73,8 +73,8 @@ function joomla2wp_print_option_page()
   echo 
   '      <div id="plugin_option_set">' . "\n" .
   '      <p>' . "\n" .
-  '        <b>Before you start the migration, please copy all your images from Joomla/Mambo to the Plugin Images Directory!!!</b><br />' . "\n" .
-  '        This is needed so that wordpress can determine the correct mime type of the images.' . "\n" .
+  '        <b>' . __('Before you start the migration, please copy all your images from ' . $j2wp_cms_types[$j2wp_cms_type] . ' to the Plugin Images Directory!!!', 'joomla2wp') . '</b><br />' . "\n" .
+  '        ' . __('This is needed so that wordpress can determine the correct mime type of the images.', 'joomla2wp') . "\n" .
   '      </p>' . "\n" .
   '      </div><br />' . "\n";
 
@@ -107,7 +107,7 @@ function joomla2wp_print_option_page()
 
   echo '      <br />' . "\n" .
   '      <fieldset>' . "\n" .
-  '        <h3>Joomla and WP - Database Parameters</h3>' . "\n" .
+  '        <h3>' . $j2wp_cms_types[$j2wp_cms_type] . ' and WP - Database Parameters</h3>' . "\n" .
   '        <div id="plugin_option_set">' . "\n" .
   '          <p><b>DB Connection Parameters</b></p>' . "\n" .
   '          <table>' . "\n" .
@@ -136,11 +136,11 @@ function joomla2wp_print_option_page()
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          </table>' . "\n" .
-  '          <p><b>Joomla DB Params</b></p>' . "\n" .
+  '          <p><b>' . $j2wp_cms_types[$j2wp_cms_type] . ' DB Params</b></p>' . "\n" .
   '          <table>' . "\n" .
   '          <tr>' . "\n" .
   '            <td>' . "\n" .
-  '              Joomla Database Name:' . "\n" .
+  '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' Database Name:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
   '              <input type="text" size="10" name="new_j2wp_joomla_db_name" value="' . get_option("j2wp_joomla_db_name" ) . '" />' . "\n" .
@@ -148,7 +148,7 @@ function joomla2wp_print_option_page()
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
   '            <td>' . "\n" .
-  '              Joomla TB Prefix:' . "\n" .
+  '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' TB Prefix:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
   '              <input type="text" size="10" name="new_j2wp_joomla_tb_prefix" value="' . get_option("j2wp_joomla_tb_prefix" ) . '" />    (<i>normally jos_</i>)' . "\n" .
@@ -156,7 +156,7 @@ function joomla2wp_print_option_page()
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
   '            <td>' . "\n" .
-  '              Joomla Images Path:' . "\n" .
+  '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' Images Path:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
   '              <input type="text" size="25" name="new_j2wp_joomla_images_path" value="' . get_option("j2wp_joomla_images_path" ) . '" />' . "\n" .
@@ -164,7 +164,7 @@ function joomla2wp_print_option_page()
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
   '            <td>' . "\n" .
-  '              Joomla Images folder:' . "\n" .
+  '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' Images folder:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
   '              <input type="text" size="25" name="new_j2wp_joomla_images_folder" value="' . get_option("j2wp_joomla_images_folder" ) . '" />' . "\n" .
@@ -172,7 +172,7 @@ function joomla2wp_print_option_page()
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
   '            <td>' . "\n" .
-  '              Joomla Website URL:' . "\n" .
+  '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' Website URL:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
   '              <span class="small">http://</span><input type="text" size="25" name="new_j2wp_joomla_web_url" value="' . get_option("j2wp_joomla_web_url" ) . '" />' . "\n" .
@@ -302,12 +302,12 @@ echo '      <br />' . "\n" .
 echo '<br /><hr /><br />' . "\n";
 echo '<h3>Data Migration</h3>' . "\n";
 echo '<br />' . "\n";
-  _e('To start the migration of Joomla posts to Wordpress - press the button below!', 'joomla2wp'); 
+  _e('To start the migration of ' . $j2wp_cms_types[$j2wp_cms_type] . ' posts to Wordpress - press the button below!', 'joomla2wp'); 
   echo "\n";
 echo '<br />' . "\n";
 echo '<div id="j2wp_migrator_btn">' . "\n";
 echo '<p class="submit">';
-echo '<input type="submit" name="do_mig_btn" value="Start Migration - Data from Joomla to WP" />';
+echo '<input type="submit" name="do_mig_btn" value="Start Migration to WP" />';
 echo '</p>' . "\n";
 echo '</div><br /><hr /><br />' . "\n";
 /*
@@ -317,7 +317,7 @@ echo '</p>';
 */
 echo '<h3>URLs in Posts Migration</h3>' . "\n";
 echo '<br />' . "\n";
-  _e('To change the URLs in the content from Joomla posts to WP posts - press the button below!', 'joomla2wp');
+  _e('To change the URLs in the content from ' . $j2wp_cms_types[$j2wp_cms_type] . ' posts to WP posts - press the button below!', 'joomla2wp');
   echo "\n";
 echo '<br />' . "\n";
 echo '<p class="submit">';
