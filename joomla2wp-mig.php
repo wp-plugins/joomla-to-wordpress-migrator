@@ -655,7 +655,7 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
   $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
   j2wp_do_wp_connect();
 
-  foreach ( $wp_posts as &$item )
+  foreach ( $wp_posts as $item )
   {
     //  get user id from wp
     $user_id = username_exists( $item['post_author'] );
