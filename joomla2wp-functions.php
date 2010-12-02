@@ -151,9 +151,9 @@ function register_j2wp_options()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// plugin admin options page
+// plugin options page
 ////////////////////////////////////////////////////////////////////////////////
-function joomla2wp_menu()
+function joomla2wp_plugin_create_option_page()
 {
   global $wpdb;
   global $joomla_cats,
@@ -166,33 +166,50 @@ function joomla2wp_menu()
      update_j2wp_options();
   }
 
-  if ( isset( $_POST['get_cat_btn'] ) )
+  joomla2wp_print_plugin_option_page();
+
+  switch( $j2wp_error_flag )
   {
-    $cat_name = 'Mortgage Glossary';
-    echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-        $cat_name = 'Daily Mortgage Updates';
-        echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-        $cat_name = 'FHA Mortgages';
-        echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-        $cat_name = "Today's Mortgage Rates";
-        echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-        $cat_name = 'Mortgage News';
-        echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-        $cat_name = 'Credit 101';
-        echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-        $cat_name = 'Mortgage 101';
-        echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-        $cat_name = 'Mortgage Programs';
-        echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-        $cat_name = 'Credit Optimization';
-        echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-        $cat_name = 'Credit Disputes';
-        echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-        $cat_name = 'Support Team';
-        echo $cat_name . ': ' . get_cat_ID($cat_name) . '<br />' . "\n";
-  
-        echo '<div id="message" class="updated fade">';
-        echo '<strong>List done </strong>.</div>';
+    case 0:
+      break;
+    case -70000:
+      echo '<div id="message" class="error">';
+      echo '<strong>Please fill up all MySQL Parameters !!!</strong>.</div>';
+      j2wp_print_error_msg();
+      break;
+  }
+
+  return;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// plugin options page
+////////////////////////////////////////////////////////////////////////////////
+function joomla2wp_plugin_create_migration_page()
+{
+  global $wpdb;
+  global $joomla_cats,
+         $j2wp_error_flag;
+  static $sel_values = 0;
+
+
+  if ( isset( $_POST['j2wp_cat_sel_update'] ) )
+  {
+    //  check if category selection option checkbox is set 
+    if (!isset( $_POST['new_j2wp_cat_sel'] ))
+    {
+      $_POST['new_j2wp_cat_sel'] = 'off';
+      $cat_sel = 'off';
+    }
+    else
+    {
+      $_POST['new_j2wp_cat_sel'] = 'on';
+      $cat_sel = 'on';
+    }
+
+     //  call update function
+     update_option( 'j2wp_cat_sel', $cat_sel );
   }
 
   if ( isset( $_POST['change_urls_btn'] ) )
@@ -247,18 +264,7 @@ function joomla2wp_menu()
   if ( !(isset( $_POST['do_mig_btn'] )) AND !(isset( $_POST['j2wp_cats_continue_btn'] )) )
   {
     $_POST['print_cats_sel_page'] = false;
-    joomla2wp_print_option_page();
-  }
-
-  switch( $j2wp_error_flag )
-  {
-    case 0:
-      break;
-    case -70000:
-      echo '<div id="message" class="error">';
-      echo '<strong>Please fill up all MySQL Parameters !!!</strong>.</div>';
-      j2wp_print_error_msg();
-      break;
+    joomla2wp_print_plugin_migration_page();
   }
 
   return;
@@ -309,18 +315,6 @@ function update_j2wp_options()
 {
   global $j2wp_mysql_vars;
 
-  //  check if category selection option checkbox is set 
-  if (!isset( $_POST['new_j2wp_cat_sel'] ))
-  {
-    $_POST['new_j2wp_cat_sel'] = 'off';
-    $cat_sel = 'off';
-  }
-  else
-  {
-    $_POST['new_j2wp_cat_sel'] = 'on';
-    $cat_sel = 'on';
-  }
-
   //  check if Change Mysql Server Variables option checkbox is set 
   if (!isset( $_POST['new_j2wp_mysql_change_vars'] ))
   {
@@ -361,7 +355,6 @@ function update_j2wp_options()
 
   update_option( 'j2wp_mysql_change_vars', $_POST['new_j2wp_mysql_change_vars'] );
   update_option( 'j2wp_cms_type', $_POST['new_j2wp_cms_type'] );
-  update_option( 'j2wp_cat_sel', $cat_sel );
   update_option( 'j2wp_mysql_srv', $_POST['new_j2wp_mysql_srv'] );
   update_option( 'j2wp_mysql_usr', $_POST['new_j2wp_mysql_usr'] );
   update_option( 'j2wp_mysql_pswd', $_POST['new_j2wp_mysql_pswd'] );
@@ -385,7 +378,9 @@ function update_j2wp_options()
 ////////////////////////////////////////////////////////////////////////////////
 function joomla2wp_admin_actions()
 {
-  add_options_page("Joomla2WP Migrator options", "Joomla2WP", 1, "Joomla2WP", "joomla2wp_menu");
+  add_menu_page( 'Joompla2WP Plugin Options','Joomla2WP', 'manage_options', 'joomla2wp-option-page', 'joomla2wp_plugin_create_option_page');
+  add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Settings', 'Settings',  'manage_options', 'joomla2wp-option-page','joomla2wp_plugin_create_option_page');
+  add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Migration','Migration', 'manage_options', 'joomla2wp-migration-page','joomla2wp_plugin_create_migration_page');
 
   return;    
 }

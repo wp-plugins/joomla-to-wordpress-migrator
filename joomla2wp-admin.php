@@ -1,7 +1,7 @@
 <?php
 global  $j2wp_mysql_vars;
 
-function joomla2wp_print_option_page()
+function joomla2wp_print_plugin_option_page()
 {
   global $wpdb;
   global  $j2wp_mysql_srv,
@@ -40,15 +40,6 @@ function joomla2wp_print_option_page()
   $cat_sel           = get_option("j2wp_cat_sel");
   $mysql_change_vars = get_option("j2wp_mysql_change_vars");
 
-  if ( $cat_sel == 'on' )
-  {
-    $cat_sel_checkbox = ' checked="checked" ';
-  }
-  else
-  {
-    $cat_sel_checkbox = ' ';
-  }
-
   if ( $mysql_change_vars == 'on' )
   {
     $mysql_change_vars_checkbox = ' checked="checked" ';
@@ -68,17 +59,8 @@ function joomla2wp_print_option_page()
   '      <p class="submit">' . "\n" .
   '        <input type="submit" name="j2wp_options_update" value="Update Options &raquo;" />' . "\n" .
   '        <br />' . "\n" .
-  '      </p>' . "\n";
-
-  echo 
-  '      <div id="plugin_option_set">' . "\n" .
-  '      <p>' . "\n" .
-  '        <b>' . __('Before you start the migration, please copy all your images from ' . $j2wp_cms_types[$j2wp_cms_type] . ' to the Plugin Images Directory!!!', 'joomla2wp') . '</b><br />' . "\n" .
-  '        ' . __('This is needed so that wordpress can determine the correct mime type of the images.', 'joomla2wp') . "\n" .
   '      </p>' . "\n" .
-  '      </div><br />' . "\n";
-
-  echo '      <br />' . "\n" .
+  '      <br />' . "\n" .
   '      <fieldset>' . "\n" .
   '        <h3>CMS Selection</h3>' . "\n" .
   '        <div id="plugin_option_set">' . "\n" .
@@ -276,7 +258,69 @@ echo '          <tr>' . "\n" .
   '        </div>' . "\n" .
   '      </fieldset>' . "\n";
 */
-echo '      <br />' . "\n" .
+
+  echo
+  '      <p class="submit">' . "\n" .
+  '        <input type="submit" name="j2wp_options_update" value="Update Options &raquo;" />' . "\n" .
+  '        <br />' . "\n" .           
+  '      </p>' . "\n" .
+  '</form>' . "\n" .
+  '</div>   <!--- DIV wrap END  --->' . "\n";
+
+  return;
+}
+
+
+
+function joomla2wp_print_plugin_migration_page()
+{
+  global $wpdb;
+  global  $j2wp_mysql_srv,
+          $j2wp_mysql_usr,
+          $j2wp_mysql_pswd,
+          $j2wp_mysql_change_vars,
+          $j2wp_joomla_db_name,
+          $j2wp_joomla_tb_prefix,
+          $j2wp_joomla_images_path,
+          $j2wp_joomla_images_folder,
+          $j2wp_joomla_web_url,
+          $j2wp_wp_db_name,
+          $j2wp_wp_tb_prefix,
+          $j2wp_wp_web_url;
+  global $j2wp_mysql_vars;
+
+  $j2wp_cms_types = array(
+        '0'  => 'Joomla',
+        '1'  => 'Mambo'
+        );
+
+  // get the options
+  $j2wp_cms_type     = get_option('j2wp_cms_type');
+  $cat_sel           = get_option('j2wp_cat_sel');
+
+  if ( $cat_sel == 'on' )
+  {
+    $cat_sel_checkbox = ' checked="checked" ';
+  }
+  else
+  {
+    $cat_sel_checkbox = ' ';
+  }
+
+  echo '  <div class="wrap">' . "\n" .
+  '    <h2>' . $j2wp_cms_types[$j2wp_cms_type] . ' To WordPress Migrator</h2>' . "\n" .
+  '    <form id="j2wp_plugin_options_form" action="" method="post">' . "\n" .
+  '      <br /><hr />' . "\n" .
+  '      ' . __( 'Please set first the MySQL Database Parameters in the Plugin Settings Page', 'joomla2wp') . "\n" .
+  '      <br /><hr />' . "\n" .
+  '      <br />' . "\n" .
+  '      <div id="plugin_option_set">' . "\n" .
+  '      <p>' . "\n" .
+  '        <b>' . __('Before you start the migration, please copy all your images from ' . $j2wp_cms_types[$j2wp_cms_type] . ' to the Plugin Images Directory!!!', 'joomla2wp') . '</b><br />' . "\n" .
+  '        ' . __('This is needed so that wordpress can determine the correct mime type of the images.', 'joomla2wp') . "\n" .
+  '      </p>' . "\n" .
+  '      </div><br />' . "\n" .
+  '      <br />' . "\n" .
   '      <fieldset>' . "\n" .
   '        <h3>Category Selection</h3>' . "\n" .
   '        <div id="plugin_option_set">' . "\n" .
@@ -291,15 +335,14 @@ echo '      <br />' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          </table>' . "\n" .
+  '          <p class="submit">' . "\n" .
+  '            <input type="submit" name="j2wp_cat_sel_update" value="Set Catagory Selection Option &raquo;" />' . "\n" .
+  '            <br />' . "\n" .           
+  '          </p>' . "\n" .
   '        </div>' . "\n" .
   '      </fieldset>' . "\n" .
   '      <br />' . "\n" .
-  '      <p class="submit">' . "\n" .
-  '        <input type="submit" name="j2wp_options_update" value="Update Options &raquo;" />' . "\n" .
-  '        <br />' . "\n" .           
-  '      </p>' . "\n";
-
-echo '<br /><hr /><br />' . "\n";
+  '      <br /><hr /><br />' . "\n";
 echo '<h3>Data Migration</h3>' . "\n";
 echo '<br />' . "\n";
   _e('To start the migration of ' . $j2wp_cms_types[$j2wp_cms_type] . ' posts to Wordpress - press the button below!', 'joomla2wp'); 
@@ -310,11 +353,6 @@ echo '<p class="submit">';
 echo '<input type="submit" name="do_mig_btn" value="Start Migration to WP" />';
 echo '</p>' . "\n";
 echo '</div><br /><hr /><br />' . "\n";
-/*
-echo '<p class="submit">';
-echo '<input type="submit" name="get_cat_btn" value="Get Cats" />';
-echo '</p>';
-*/
 echo '<h3>URLs in Posts Migration</h3>' . "\n";
 echo '<br />' . "\n";
   _e('To change the URLs in the content from ' . $j2wp_cms_types[$j2wp_cms_type] . ' posts to WP posts - press the button below!', 'joomla2wp');

@@ -41,9 +41,9 @@ Please take a look at **[Support page](http://it-gnoth.de/projekte/wordpress/wp-
 
 NO !!! They must be on the same MySQL Server.
 
-= What about foo bar? =
+= What if the plugin stops working during URL change process? =
 
-Answer to foo bar dilemma.
+Reload the browser page. Normally the change of URL's works, but sometimes it do not return the generated output.
 
 == Screenshots ==
 
@@ -101,6 +101,9 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 
 = 1.3.3 =
 - errors fixed
+
+= 1.3.4 =
+- design changes
 
 `<?php code(); // goes in backticks ?>`
 

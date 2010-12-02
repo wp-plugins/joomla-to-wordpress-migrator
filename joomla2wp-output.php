@@ -12,7 +12,6 @@ function j2wp_print_output_page()
 
   flush();
   ob_flush();
-  sleep(1);
 
   return;
 }

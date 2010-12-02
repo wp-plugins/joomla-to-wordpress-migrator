@@ -378,8 +378,8 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_image
   j2wp_do_wp_connect();
 
   $count = 0;
-  //  foreach ($wp_posts as $j2wp_post) 
-  foreach ($sql_query as $query) 
+  foreach ($wp_posts as $j2wp_post) 
+//  foreach ($sql_query as $query) 
   {
     if ( (($count % 50) == 0) )
       echo '.';
@@ -396,18 +396,20 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_image
     if ( mysql_error() )
       echo mysql_error();
 
+//
+//  old way with native sql call
+/*
     set_time_limit(0);
     $query_rc = mysql_query($query,$CON);
     if ( mysql_error() )
       echo mysql_error();
     //  wait for proccessing the sql
     usleep(10000);
+*/
 
-
-    //  $id = wp_insert_post( $j2wp_post );
-
+    $id = wp_insert_post( $j2wp_post );
     set_time_limit(0);
-    $id = mysql_insert_id($CON);
+//    $id = mysql_insert_id($CON);
     if($id) 
     {
       wp_set_post_categories( $id, array($wp_cat_id) );
@@ -593,6 +595,7 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
     
     // Content Filter
     $post_content = str_replace('<hr id="system-readmore" />',"<!--more-->",$post_content);
+    $post_content = str_replace('<hr id="system-readmore"/>',"<!--more-->",$post_content);
     $post_content = str_replace('src="images/','src="/images/',$post_content);
 
     // find all {mosimage} and replace
@@ -749,10 +752,11 @@ function joomla2wp_change_urls()
   $post_list = mysql_query($query, $CON);
   if ( mysql_error() )
     echo mysql_error();
-
-  while( $row = mysql_fetch_array($post_list) ) 
+  else
   {
-    $wp_posts[] = array(
+    while( $row = mysql_fetch_array($post_list) ) 
+    {
+      $wp_posts[] = array(
         'ID' => $row['ID'],
         'post_author' => $row['post_author'],
         'post_content' => $row['post_content'], 
@@ -763,12 +767,15 @@ function joomla2wp_change_urls()
         'post_title' => $row['post_title'],
         'post_name' => $row['post_name']
         );  
-    if ( mysql_error() )
-      echo mysql_error();
+      if ( mysql_error() )
+        echo mysql_error();
+    }
   }
   
   echo '<br />' . __( 'The following links must be changed manually:', 'joomla2wp') . ' <br /><br />' . "\n";
 
+  unset($post_list);
+  reset($wp_posts);
   //  check each post for links
   foreach ( $wp_posts as $j2wp_post )
   {
