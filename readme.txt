@@ -1,0 +1,112 @@
+=== Joomla/Mambo To Wordpress Migrator ===
+Contributors: christian_gnoth
+Author Uri: http://it-gnoth.de
+Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
+Tags: joomla, mambo, wordpress, migrator, converter
+Requires at least: 2.7
+Tested up to: WP 3.0.1
+Stable tag: 1.3.5
+
+A plugin to migrate content from Joomla/Mambo to Wordpress.
+
+== Description ==
+
+Tested with **Joomla 1.5** **Mambo 4.5.2** and **Wordpress 3.1**
+
+The Wordpress Installation should be empty !!! No posts, pages or categories !!! Joomla and WP must be on the same MySQL Server !!!
+
+If you want migrate the images too, copy them into the plugin images folder!!!
+
+Go to the Plugin Admin Page and fill in the MySQL Connection Parameters !!!
+
+You can choose under the WP Admin section on the Plugin Option Page if you want migrate all categories at once or select specific categories. 
+
+Start the Migration with the button on the Plugin Panel.
+
+After sucessfull migration you can press the "Change Urls" button to change the links in the content of the posts.  
+
+== Support ==
+
+Please take a look at **[Support page](http://it-gnoth.de/projekte/wordpress/wp-support/)** 
+
+
+== Installation ==
+
+1.  extract plugin zip file and load up to your wp-content/plugin directory
+2.  Activate Plugin in the Admin => Plugins Menu
+
+== Frequently Asked Questions ==
+
+= Can I have Joomla and WP on different MySQL Server? =
+
+NO !!! They must be on the same MySQL Server.
+
+= What if the plugin stops working during URL change process? =
+
+Reload the browser page. Normally the change of URL's works, but sometimes it do not return the generated output.
+
+== Screenshots ==
+
+1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Note that the screenshot is taken from
+the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1.png` (or jpg, jpeg, gif)
+2. This is the second screen shot
+
+
+== Translations ==
+* German (de_DE)
+* English (default)
+* other must be translated
+
+== Changelog ==
+
+= 1.0.1 =
+- output changed 
+
+= 1.1.0 = 
+- feature added: possibility to choose categories
+
+= 1.1.1 =
+- syntax error fixed in admin.php
+
+= 1.1.2 =
+- mysql connect without MYSQL_CLINET_COMPRESS parameter in joomla2wp-mig.php
+
+= 1.1.3 =
+- error fixed in joomla2wp-functions.php
+
+= 1.1.4 =
+- error fixed in joomla2wp-mig.php
+
+= 1.2.0 =
+- script stop working problem solved - set php ini values mysql.connect_timeout - now big amount of data no problem
+
+= 1.2.1 =
+- URL change feature extended in functionality - more URLs captured and changed
+- error message flag used - now different error codes
+- error code -70000: MySQL Conncetion Parameters not filled up.
+
+= 1.2.2 =
+- SVN Repository problem - files missed, fixed
+
+= 1.3.0 =
+- tested with mambo 4.5.2
+- added user migration
+- added images migration
+
+= 1.3.1 =
+- errors fixed
+
+= 1.3.2 =
+- design changes plugin admin panel
+
+= 1.3.3 =
+- errors fixed
+
+= 1.3.4 =
+- design changes
+
+= 1.3.5 =
+- migration output messages problem fixed
+
+`<?php code(); // goes in backticks ?>`
+
