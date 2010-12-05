@@ -719,6 +719,9 @@ function joomla2wp_change_urls()
 
   $wp_posts = array();
 
+  ob_flush();
+  ob_end_clean();
+
   if ( !$CON )
     $CON = j2wp_do_mysql_connect();
   
@@ -822,11 +825,7 @@ function joomla2wp_change_urls()
   
   $j2wp_error_flag = 0;
 
-  echo '<div id="message" class="updated fade"><strong>URLs changed ! </strong>.</div>';
-
-  flush();
-  ob_flush();
-  ob_end_flush();
+  echo '<div id="message" class="updated fade"><strong>URLs changed ! </strong></div>';
 
   return $j2wp_error_flag;
 }
