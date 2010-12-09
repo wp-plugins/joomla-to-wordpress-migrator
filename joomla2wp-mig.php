@@ -619,11 +619,11 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
 
     $pos  = 0;
     $indx = 0;
-    while( !(strpos( $post_content, $pos) === false) )
+    while( !(strpos( $post_content, $image_string, $pos) === false) )
     {
       $images_replace = '<img src="' . $wp_blog_url . $wp_img_folder . '/'. $images_items[$indx]['filename'] .'"'
                        .' align="'. $images_items[$indx]['align'] .'" title="'. $images_items[$indx]['title'] .'" alt="'. $images_items[$indx]['title'] .'"/>';
-      $pos = strpos( $post_content, $pos);
+      $pos = strpos( $post_content, $image_string, $pos);
       $post_content = substr_replace( $post_content, $images_replace, $pos, 10);
       $pos++;
       $indx++;
