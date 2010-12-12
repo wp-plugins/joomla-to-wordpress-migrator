@@ -156,6 +156,10 @@ function j2wp_do_mig( $joomla_cats )
     $index++;
   }
 
+  //  migration of pages
+  echo '<br />' . "\n";
+  echo '<b><i>migrating pages</i></b>....<br /><br />' . "\n";
+  j2wp_mig_pages();
 
   $mtime = microtime(); 
   $mtime_end = explode(' ',$mtime); 
@@ -172,6 +176,170 @@ function j2wp_do_mig( $joomla_cats )
 
   return;
 }
+
+
+function j2wp_mig_pages()
+{
+  global  $wpdb,
+          $CON;
+  global  $j2wp_user_array;
+
+  if ( !$CON )
+    $CON = j2wp_do_mysql_connect();
+
+  $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
+  j2wp_do_joomla_connect();
+
+  $query  = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "content` WHERE catid = 0 AND state = 1 ORDER BY `created` ";
+  $result = mysql_query($query, $CON);
+  if ( !$result )
+    echo mysql_error();
+  $post_counter = 0;
+  while($R = mysql_fetch_object($result)) 
+  {
+    if ( mysql_error() )
+      echo mysql_error();
+    set_time_limit(0);
+
+    // Title is unique so check that it will be used only once
+    if ( $R->alias )
+    {
+      $tmp = $R->alias;
+      if ( $STORAGE[$tmp] == true )
+        $R->alias = $R->alias . "-II";
+      $tmp = $R->alias;
+      $STORAGE[$tmp] = true;
+    }
+    else
+    {
+      $R->alias = sanitize_title($R->title); 
+    }
+
+    if($R->fulltext AND $R->introtext)
+      $post_content = $R->introtext . '<br /><!--more--><br />' . $R->fulltext; 
+    elseif($R->introtext AND !$R->fulltext)
+      $post_content = $R->introtext;
+    
+    // Content Filter
+    $post_content = str_replace('<hr id="system-readmore" />',"<!--more-->",$post_content);
+    $post_content = str_replace('<hr id="system-readmore"/>',"<!--more-->",$post_content);
+    $post_content = str_replace('src="images/','src="/images/',$post_content);
+
+    // find all {mosimage} and replace
+    $image_string = '{mosimage}';
+
+    $array_count  = count($R->images);
+    $images_count = intval($array_count / 6);
+    $images       = explode("|", $R->images);
+    for ( $i=0; $i < $images_count; $i++ )
+    {
+      $images_items[$i]['filename'] = $images[$i * 0];
+      $images_items[$i]['align']    = $images[$i * 1];
+      $images_items[$i]['title']    = $images[$i * 2];
+      $images_items[$i]['3']        = $images[$i * 3];
+      $images_items[$i]['alt']      = $images[$i * 4];
+      $images_items[$i]['5']        = $images[$i * 5];
+      $images_items[$i]['6']        = $images[$i * 6];
+      $images_items[$i]['7']        = $images[$i * 7];
+      // asterisk.png|left|Mambo Logo|1|Mambo Flower Logo|bottom|center|120
+    }
+
+    $pos  = 0;
+    $indx = 0;
+    while( !(strpos( $post_content, $image_string, $pos) === false) )
+    {
+      $images_replace = '<img src="' . $wp_blog_url . $wp_img_folder . '/'. $images_items[$indx]['filename'] .'"'
+                       .' align="'. $images_items[$indx]['align'] .'" title="'. $images_items[$indx]['title'] .'" alt="'. $images_items[$indx]['title'] .'"/>';
+      $pos = strpos( $post_content, $image_string, $pos);
+      $post_content = substr_replace( $post_content, $images_replace, $pos, 10);
+      $pos++;
+      $indx++;
+    }
+
+    //  get username
+    $key = array_search ( $R->created_by , $j2wp_user_array); 
+
+    $j2wp_pages[] = array(
+        'post_author' => $j2wp_user_array[$key]['username'],
+        'post_content' => $post_content, 
+        'post_date' => $R->created,
+        'post_date_gmt' => $R->created,
+        'post_modified' => $R->modified,
+        'post_modified_gmt' => $R->modified,
+        'post_title' => $R->title,
+        'post_status' => 'publish',
+        'comment_status' => 'open',
+        'ping_status' => 'open',
+        'post_name' => $R->alias,
+        'tags_input' => $R->metakey, 
+        'post_type' => 'page'
+      );
+
+    $page_tags[]   = $R->metakey;
+    $page_images[] = $R->images;
+    set_time_limit(0);
+  }
+  mysql_free_result($result);
+
+  //  insert pages to wp
+  $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
+  j2wp_do_wp_connect();
+
+  $cnt = 0;
+  foreach ( $j2wp_pages as $j2wp_page )
+  {
+    $id = wp_insert_post( $j2wp_page );
+    //  add attachments to the page
+    $joomla_img_folder       = get_option('j2wp_joomla_images_folder');
+    $joomla_path             = get_option('j2wp_joomla_images_path');
+    $array_count  = count($page_images[$cnt]);
+    $images_count = intval($array_count / 6);
+    $images       = explode("|", $page_images[$cnt]);
+    $images_items = array();
+    for ( $i=0; $i < $images_count; $i++ )
+    {
+      $images_items[$i]['filename'] = $images[$i * 0];
+      $images_items[$i]['align']    = $images[$i * 1];
+      $images_items[$i]['title']    = $images[$i * 2];
+      $images_items[$i]['3']        = $images[$i * 3];
+      $images_items[$i]['alt']      = $images[$i * 4];
+      $images_items[$i]['5']        = $images[$i * 5];
+      $images_items[$i]['6']        = $images[$i * 6];
+      $images_items[$i]['7']        = $images[$i * 7];
+      // asterisk.png|left|Mambo Logo|1|Mambo Flower Logo|bottom|center|120
+    }
+    foreach ( $images_items as $image_item )
+    {
+      $filename = JTWPDIR . '/images/' . $image_item['filename'];
+      echo '<br />' . $filename . '<br />';
+      $wp_filetype = wp_check_filetype(basename($filename), null );
+      echo '<br />' . $wp_filetype . '<br />';
+      $attachment  = array(
+           'post_mime_type' => $wp_filetype['type'],
+           'post_title'     => preg_replace('/\.[^.]+$/', '', basename($filename)),
+           'post_content'   => '',
+           'post_status'    => 'inherit'
+           );
+
+      $attach_id = wp_insert_attachment( $attachment, $filename, $id );
+      // you must first include the image.php file
+      // for the function wp_generate_attachment_metadata() to work
+      require_once(ABSPATH . "wp-admin" . '/includes/image.php');
+      $attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
+      wp_update_attachment_metadata( $attach_id,  $attach_data );
+    }
+    $cnt++;
+  }
+
+  if ($cnt)
+    echo 'migrated ' . $cnt . ' pages successfully!<br /><br />' . "\n";
+  else
+    echo 'No static pages found !!!<br /><br />' . "\n";
+
+  return;
+}
+
+
 
 
 function j2wp_mig_users()
