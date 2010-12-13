@@ -292,6 +292,11 @@ function j2wp_mig_pages()
     //  add attachments to the page
     $joomla_img_folder       = get_option('j2wp_joomla_images_folder');
     $joomla_path             = get_option('j2wp_joomla_images_path');
+    $upload_dir              = wp_upload_dir(); 
+    $pos = strpos( $upload_dir['basedir'], '/wp-content/uploads');
+    $j2wp_base_dir           = substr($upload_dir['basedir'], 0, $pos);
+    $j2wp_wp_img_dir         = $j2wp_base_dir . get_option('j2wp_wp_images_folder');
+
     $array_count  = count($page_images[$cnt]);
     $images_count = intval($array_count / 6);
     $images       = explode("|", $page_images[$cnt]);
@@ -310,7 +315,7 @@ function j2wp_mig_pages()
     }
     foreach ( $images_items as $image_item )
     {
-      $filename = JTWPDIR . '/images/' . $image_item['filename'];
+      $filename = $j2wp_wp_img_dir . '/' . $image_item['filename'];
       echo '<br />' . $filename . '<br />';
       $wp_filetype = wp_check_filetype(basename($filename), null );
       echo '<br />' . $wp_filetype . '<br />';
@@ -355,7 +360,7 @@ function j2wp_mig_users()
   $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
   j2wp_do_joomla_connect();
 
-  $query = "SELECT id, name, username, email, password, usertype FROM " . $j2wp_joomla_tb_prefix . "users ";
+  $query = "SELECT id, name, username, email, password, usertype FROM " . $j2wp_joomla_tb_prefix . "users WHERE block = 0 ";
   $result = mysql_query($query, $CON);
   if ( !$result )
     echo mysql_error();
@@ -591,6 +596,11 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_image
       //  add attachment to post
       $joomla_img_folder       = get_option('j2wp_joomla_images_folder');
       $joomla_path             = get_option('j2wp_joomla_images_path');
+      $upload_dir              = wp_upload_dir(); 
+      $pos = strpos( $upload_dir['basedir'], '/wp-content/uploads');
+      $j2wp_base_dir           = substr($upload_dir['basedir'], 0, $pos);
+      $j2wp_wp_img_dir         = $j2wp_base_dir . get_option('j2wp_wp_images_folder');
+
       $array_count  = count($post_images[$count]);
       $images_count = intval($array_count / 6);
       $images       = explode("|", $post_images[$count]);
@@ -610,7 +620,7 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_image
       }
       foreach ( $images_items as $image_item )
       {
-        $filename = JTWPDIR . '/images/' . $image_item['filename'];
+        $filename = §j2wp_wp_img_dir . '/' . $image_item['filename'];
         echo '<br />' . $filename . '<br />';
         $wp_filetype = wp_check_filetype(basename($filename), null );
         echo '<br />' . $wp_filetype . '<br />';

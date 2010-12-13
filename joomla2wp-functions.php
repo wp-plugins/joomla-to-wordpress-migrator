@@ -3,7 +3,7 @@
 Plugin Name: Joomla/Mambo to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
 Description: migrates all posts from Joomla/Mambo tables to WP tables
-Version: 1.3.7
+Version: 1.3.8
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -219,6 +219,18 @@ function joomla2wp_plugin_create_migration_page()
 	
   if ( isset( $_POST['do_mig_btn'] ) )
   {
+    j2wp_print_img_copy_page();
+  }
+
+  if ( isset( $_POST['j2wp_cats_abort_btn'] ) )
+  {
+    $_POST['print_cats_sel_page'] = false;
+    echo '<div id="message" class="updated fade">';
+    echo '<strong>Migration stopped </strong>.</div>';
+  }
+
+  if ( isset( $_POST['j2wp_img_cpy_continue_btn'] ) )
+  {
     // check if categories should be selected
     $j2wp_cat_sel = get_option('j2wp_cat_sel');
     if ( $j2wp_cat_sel == 'off' )
@@ -231,11 +243,8 @@ function joomla2wp_plugin_create_migration_page()
     }
   }
 
-  if ( isset( $_POST['j2wp_cats_abort_btn'] ) )
+  if ( isset( $_POST['j2wp_img_cpy_abort_btn'] ) )
   {
-    $_POST['print_cats_sel_page'] = false;
-    echo '<div id="message" class="updated fade">';
-    echo '<strong>Migration stopped </strong>.</div>';
   }
 
   if ( isset( $_POST['j2wp_cats_continue_btn'] ) )
@@ -261,7 +270,9 @@ function joomla2wp_plugin_create_migration_page()
     joomla2wp_print_cat_sel_page();
   }
 
-  if ( !(isset( $_POST['do_mig_btn'] )) AND !(isset( $_POST['j2wp_cats_continue_btn'] )) )
+  if ( !(isset( $_POST['do_mig_btn'] )) AND !(isset( $_POST['j2wp_cats_continue_btn'] )) AND
+       !(isset( $_POST['j2wp_img_cpy_continue_btn']))
+     )
   {
     $_POST['print_cats_sel_page'] = false;
     joomla2wp_print_plugin_migration_page();

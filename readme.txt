@@ -5,7 +5,7 @@ Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
 Tags: joomla, mambo, wordpress, migrator, converter
 Requires at least: 2.7
 Tested up to: WP 3.0.1
-Stable tag: 1.3.7
+Stable tag: 1.3.8
 
 A plugin to migrate content from Joomla/Mambo to Wordpress.
 
@@ -44,6 +44,10 @@ NO !!! They must be on the same MySQL Server.
 = What if the plugin stops working during URL change process? =
 
 Reload the browser page. Normally the change of URL's works, but sometimes it do not return the generated output.
+
+= How to migrate images ? =
+
+You have to copy first the images from your Joomla installation to your wordpress installation. This is needed, so that wordpress can determine the correct MIME Type during the add_attachment process.
 
 == Screenshots ==
 
@@ -113,6 +117,9 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 
 = 1.3.7 =
 - migration of static pages added
+
+= 1.3.8 =
+- migration process changed - "copy images" step included
 
 `<?php code(); // goes in backticks ?>`
 

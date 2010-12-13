@@ -191,7 +191,8 @@ function joomla2wp_print_plugin_option_page()
   '            <td>' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
-  '              No forward slash on the end of the folder !!!' . "\n" .
+  '              <p><b>No forward slash on the end of the folder !!!</b><br />' . "\n" .
+  '              This has to be a subdir of your wordpress installation like <i>/wp-content/uploads</i> or <i>/wp-content/themes/yourtheme/images</i>.</p>' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
@@ -200,6 +201,13 @@ function joomla2wp_print_plugin_option_page()
   '            </td>' . "\n" .
   '            <td>' . "\n" .
   '              <span class="small">http://</span><input type="text" size="25" name="new_j2wp_wp_web_url" value="' . get_option("j2wp_wp_web_url" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <p><b>This is needed if you have images in your posts/articles !!!</b>' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          </table>' . "\n" .
@@ -398,6 +406,38 @@ function joomla2wp_print_cat_sel_page()
   echo '  </p>' . "\n";
   echo '</form>' . "\n";
   echo '</div>   <!--- DIV wrap END  --->' . "\n";
+  
+  return;
+}
+
+
+function j2wp_print_img_copy_page()
+{
+  $j2wp_cms_types = array(
+        '0'  => 'Joomla',
+        '1'  => 'Mambo'
+        );
+
+  // get the options
+  $j2wp_cms_type     = get_option('j2wp_cms_type');
+
+  // print panel with cats
+  echo 
+  '<div class="wrap">' . "\n" .
+  '<h3>' . __( 'First Step of the Migration' , 'joomla2wp' ) . '</h3>' . "\n" .
+  '<br />' . "\n" .
+  '<form id="j2wp_img_cpy_form" name="joomla_img_cpy_list" method="post" action="">' . "\n" .
+  '  <p>' . "\n" .
+  '    Please copy all images from your ' . $j2wp_cms_types[$j2wp_cms_type] . ' installation folders to the WP image folder you provided in the settings page !<br />' . "\n" .
+  '    If all images are copied - press the <i>Continue</i> button.' . "\n" .
+  '  </p>' . "\n" .
+  '  <p class="submit">' . "\n" .
+  '    <input type="submit" name="j2wp_img_cpy_abort_btn" value="' . __( 'Abort', 'joomla2wp') . '" />' . "\n" .
+  '    <input id="j2wp_img_cpy_cont_btn" type="submit" name="j2wp_img_cpy_continue_btn" value="' . __( 'Continue', 'joomla2wp') . '" />' . "\n" .
+  '    <br />' . "\n" .
+  '  </p>' . "\n" .
+  '</form>' . "\n" .
+  '</div>   <!--- DIV wrap END  --->' . "\n";
   
   return;
 }
