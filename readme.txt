@@ -5,7 +5,7 @@ Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
 Tags: joomla, mambo, wordpress, migrator, converter
 Requires at least: 2.7
 Tested up to: WP 3.0.1
-Stable tag: 1.3.8
+Stable tag: 1.3.9
 
 A plugin to migrate content from Joomla/Mambo to Wordpress.
 
@@ -15,7 +15,7 @@ Tested with **Joomla 1.5** **Mambo 4.5.2** and **Wordpress 3.1**
 
 The Wordpress Installation should be empty !!! No posts, pages or categories !!! Joomla and WP must be on the same MySQL Server !!!
 
-If you want migrate the images too, copy them into the plugin images folder!!!
+If you want migrate the images too, copy them into the images folder of your wordpress installation and provide this directory in the plugin settings!!!
 
 Go to the Plugin Admin Page and fill in the MySQL Connection Parameters !!!
 
@@ -24,6 +24,14 @@ You can choose under the WP Admin section on the Plugin Option Page if you want 
 Start the Migration with the button on the Plugin Panel.
 
 After sucessfull migration you can press the "Change Urls" button to change the links in the content of the posts.  
+
+features:
+
+- migrates articles and static pages
+- migrates user
+- changes the urls in the posts and pages to point to the new destination
+- changes the imgage urls to point to the new image location
+- {mosimage} support
 
 == Support ==
 
@@ -40,6 +48,10 @@ Please take a look at **[Support page](http://it-gnoth.de/projekte/wordpress/wp-
 = Can I have Joomla and WP on different MySQL Server? =
 
 NO !!! They must be on the same MySQL Server.
+
+= I am getting the following error: Warning: mysql_connect() [function.mysql-connect]: Can't connect to local MySQL server through socket '/usr/local/mysql-5.0/data/mysql.sock' =
+
+Please check which MySQL server name your webhoster provides - it may be different then "localhost".
 
 = What if the plugin stops working during URL change process? =
 
@@ -120,6 +132,9 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 
 = 1.3.8 =
 - migration process changed - "copy images" step included
+
+= 1.3.9 =
+- change of <img> tag in the posts/pages: src attribut points now to the directory of the plugin settings page
 
 `<?php code(); // goes in backticks ?>`
 

@@ -184,6 +184,9 @@ function j2wp_mig_pages()
           $CON;
   global  $j2wp_user_array;
 
+  $wp_img_folder       = get_option('j2wp_wp_images_folder');
+  $wp_blog_url         = 'http://' . get_option('j2wp_wp_web_url');
+
   if ( !$CON )
     $CON = j2wp_do_mysql_connect();
 
@@ -223,7 +226,35 @@ function j2wp_mig_pages()
     // Content Filter
     $post_content = str_replace('<hr id="system-readmore" />',"<!--more-->",$post_content);
     $post_content = str_replace('<hr id="system-readmore"/>',"<!--more-->",$post_content);
-    $post_content = str_replace('src="images/','src="/images/',$post_content);
+    //  $post_content = str_replace('src="images/','src="/images/',$post_content);
+
+    //  find all normal image tags
+    $pos = 0;
+    while ( !(strpos( $post_content, 'src="images/', $pos) === false) )
+    {
+      $pos = strpos( $post_content, 'src="images/', $pos) + 12;
+      $pos1= strpos( $post_content, '"', $pos);
+      $j2wp_img_src = substr( $post_content, $pos, ($pos1 - $pos));
+      if ( $j2wp_img_src != '' )
+      {
+        $j2wp_img_replace = $wp_blog_url . $wp_img_folder . '/' . $j2wp_img_src;
+        $post_content = substr_replace( $post_content, $j2wp_img_replace, ($pos - 7), ($pos1 - ($pos - 7)) );
+      }
+      $pos++;
+    }
+    $pos = 0;
+    while ( !(strpos( $post_content, 'src="/images/', $pos) === false) )
+    {
+      $pos = strpos( $post_content, 'src="/images/', $pos) + 13;
+      $pos1= strpos( $post_content, '"', $pos);
+      $j2wp_img_src = substr( $post_content, $pos, ($pos1 - $pos));
+      if ( !empty($j2wp_img_src) )
+      {
+        $j2wp_img_replace = $wp_blog_url . $wp_img_folder . '/' . $j2wp_img_src;
+        $post_content = substr_replace( $post_content, $j2wp_img_replace, ($pos - 8), ($pos1 - ($pos - 8)) );
+      }
+      $pos++;
+    }
 
     // find all {mosimage} and replace
     $image_string = '{mosimage}';
@@ -696,7 +727,7 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
   $j2wp_cms_type     = get_option('j2wp_cms_type');
 
   $wp_img_folder       = get_option('j2wp_wp_images_folder');
-  $wp_blog_url         = get_option('j2wp_wp_web_url');
+  $wp_blog_url         = 'http://' . get_option('j2wp_wp_web_url');
 
   //  enable table indixes
   $query = 'ALTER TABLE ' . $j2wp_wp_tb_prefix . 'posts DISABLE KEYS;';
@@ -774,7 +805,35 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
     // Content Filter
     $post_content = str_replace('<hr id="system-readmore" />',"<!--more-->",$post_content);
     $post_content = str_replace('<hr id="system-readmore"/>',"<!--more-->",$post_content);
-    $post_content = str_replace('src="images/','src="/images/',$post_content);
+    //  $post_content = str_replace('src="images/','src="/images/',$post_content);
+
+    //  find all normal image tags
+    $pos = 0;
+    while ( !(strpos( $post_content, 'src="images/', $pos) === false) )
+    {
+      $pos = strpos( $post_content, 'src="images/', $pos) + 12;
+      $pos1= strpos( $post_content, '"', $pos);
+      $j2wp_img_src = substr( $post_content, $pos, ($pos1 - $pos));
+      if ( $j2wp_img_src != '' )
+      {
+        $j2wp_img_replace = $wp_blog_url . $wp_img_folder . '/' . $j2wp_img_src;
+        $post_content = substr_replace( $post_content, $j2wp_img_replace, ($pos - 7), ($pos1 - ($pos - 7)) );
+      }
+      $pos++;
+    }
+    $pos = 0;
+    while ( !(strpos( $post_content, 'src="/images/', $pos) === false) )
+    {
+      $pos = strpos( $post_content, 'src="/images/', $pos) + 13;
+      $pos1= strpos( $post_content, '"', $pos);
+      $j2wp_img_src = substr( $post_content, $pos, ($pos1 - $pos));
+      if ( $j2wp_img_src != '' )
+      {
+        $j2wp_img_replace = $wp_blog_url . $wp_img_folder . '/' . $j2wp_img_src;
+        $post_content = substr_replace( $post_content, $j2wp_img_replace, ($pos - 8), ($pos1 - ($pos - 8)) );
+      }
+      $pos++;
+    }
 
     // find all {mosimage} and replace
     $image_string = '{mosimage}';
