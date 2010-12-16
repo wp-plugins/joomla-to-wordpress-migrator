@@ -258,33 +258,38 @@ function j2wp_mig_pages()
 
     // find all {mosimage} and replace
     $image_string = '{mosimage}';
-
-    $array_count  = count($R->images);
-    $images_count = intval($array_count / 6);
-    $images       = explode("|", $R->images);
-    for ( $i=0; $i < $images_count; $i++ )
+    $img_cnt      = substr_count( $post_content, $image_string);
+    if ( $img_cnt )
     {
-      $images_items[$i]['filename'] = $images[$i * 0];
-      $images_items[$i]['align']    = $images[$i * 1];
-      $images_items[$i]['title']    = $images[$i * 2];
-      $images_items[$i]['3']        = $images[$i * 3];
-      $images_items[$i]['alt']      = $images[$i * 4];
-      $images_items[$i]['5']        = $images[$i * 5];
-      $images_items[$i]['6']        = $images[$i * 6];
-      $images_items[$i]['7']        = $images[$i * 7];
-      // asterisk.png|left|Mambo Logo|1|Mambo Flower Logo|bottom|center|120
-    }
-
-    $pos  = 0;
-    $indx = 0;
-    while( !(strpos( $post_content, $image_string, $pos) === false) )
-    {
-      $images_replace = '<img src="' . $wp_blog_url . $wp_img_folder . '/'. $images_items[$indx]['filename'] .'"'
-                       .' align="'. $images_items[$indx]['align'] .'" title="'. $images_items[$indx]['title'] .'" alt="'. $images_items[$indx]['title'] .'"/>';
-      $pos = strpos( $post_content, $image_string, $pos);
-      $post_content = substr_replace( $post_content, $images_replace, $pos, 10);
-      $pos++;
-      $indx++;
+      $images       = $R->images;
+      $images       = str_replace( "\r\n", '|', $images);
+      $images       = explode("|", $images);
+      $field_cnt    = count($images) / $img_cnt;
+      for ( $i=0; $i < $img_cnt; $i++ )
+      {
+        $indx = $i * $field_cnt;
+        $filename                     = $images[$indx + 0];
+        $images_items[$i]['filename'] = ltrim($filename);
+        $images_items[$i]['align']    = $images[$indx + 1];
+        $images_items[$i]['title']    = $images[$indx + 2];
+        $images_items[$i]['3']        = $images[$indx + 3];
+        $images_items[$i]['alt']      = $images[$indx + 4];
+        $images_items[$i]['5']        = $images[$indx + 5];
+        $images_items[$i]['6']        = $images[$indx + 6];
+        $images_items[$i]['7']        = $images[$indx + 7];
+        // asterisk.png|left|Mambo Logo|1|Mambo Flower Logo|bottom|center|120
+      }
+      $pos  = 0;
+      $indx = 0;
+      while( !(strpos( $post_content, $image_string, $pos) === false) )
+      {
+        $images_replace = '<img src="' . $wp_blog_url . $wp_img_folder . '/'. $images_items[$indx]['filename'] .'"'
+                         .' align="'. $images_items[$indx]['align'] .'" title="'. $images_items[$indx]['title'] .'" alt="'. $images_items[$indx]['title'] .'"/>';
+        $pos = strpos( $post_content, $image_string, $pos);
+        $post_content = substr_replace( $post_content, $images_replace, $pos, 10);
+        $pos++;
+        $indx++;
+      }
     }
 
     //  get username
@@ -837,33 +842,38 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
 
     // find all {mosimage} and replace
     $image_string = '{mosimage}';
-
-    $array_count  = count($R->images);
-    $images_count = intval($array_count / 6);
-    $images       = explode("|", $R->images);
-    for ( $i=0; $i < $images_count; $i++ )
+    $img_cnt      = substr_count( $post_content, $image_string);
+    if ( $img_cnt )
     {
-      $images_items[$i]['filename'] = $images[$i * 0];
-      $images_items[$i]['align']    = $images[$i * 1];
-      $images_items[$i]['title']    = $images[$i * 2];
-      $images_items[$i]['3']        = $images[$i * 3];
-      $images_items[$i]['alt']      = $images[$i * 4];
-      $images_items[$i]['5']        = $images[$i * 5];
-      $images_items[$i]['6']        = $images[$i * 6];
-      $images_items[$i]['7']        = $images[$i * 7];
-      // asterisk.png|left|Mambo Logo|1|Mambo Flower Logo|bottom|center|120
-    }
-
-    $pos  = 0;
-    $indx = 0;
-    while( !(strpos( $post_content, $image_string, $pos) === false) )
-    {
-      $images_replace = '<img src="' . $wp_blog_url . $wp_img_folder . '/'. $images_items[$indx]['filename'] .'"'
-                       .' align="'. $images_items[$indx]['align'] .'" title="'. $images_items[$indx]['title'] .'" alt="'. $images_items[$indx]['title'] .'"/>';
-      $pos = strpos( $post_content, $image_string, $pos);
-      $post_content = substr_replace( $post_content, $images_replace, $pos, 10);
-      $pos++;
-      $indx++;
+      $images       = $R->images;
+      $images       = str_replace( "\r\n", '|', $images);
+      $images       = explode("|", $images);
+      $field_cnt    = count($images) / $img_cnt;
+      for ( $i=0; $i < $img_cnt; $i++ )
+      {
+        $indx = $i * $field_cnt;
+        $filename                     = $images[$indx + 0];
+        $images_items[$i]['filename'] = ltrim($filename);
+        $images_items[$i]['align']    = $images[$indx + 1];
+        $images_items[$i]['title']    = $images[$indx + 2];
+        $images_items[$i]['3']        = $images[$indx + 3];
+        $images_items[$i]['alt']      = $images[$indx + 4];
+        $images_items[$i]['5']        = $images[$indx + 5];
+        $images_items[$i]['6']        = $images[$indx + 6];
+        $images_items[$i]['7']        = $images[$indx + 7];
+        // asterisk.png|left|Mambo Logo|1|Mambo Flower Logo|bottom|center|120
+      }
+      $pos  = 0;
+      $indx = 0;
+      while( !(strpos( $post_content, $image_string, $pos) === false) )
+      {
+        $images_replace = '<img src="' . $wp_blog_url . $wp_img_folder . '/'. $images_items[$indx]['filename'] .'"'
+                         .' align="'. $images_items[$indx]['align'] .'" title="'. $images_items[$indx]['title'] .'" alt="'. $images_items[$indx]['title'] .'"/>';
+        $pos = strpos( $post_content, $image_string, $pos);
+        $post_content = substr_replace( $post_content, $images_replace, $pos, 10);
+        $pos++;
+        $indx++;
+      }
     }
 
     //  get username
@@ -1477,8 +1487,13 @@ function j2wp_do_mysql_connect()
   $j2wp_mysql_usr       = get_option("j2wp_mysql_usr");
   $j2wp_mysql_pswd      = get_option("j2wp_mysql_pswd");
      
-  // Testing SQL Settings
-  $CON = mysql_connect($j2wp_mysql_srv, $j2wp_mysql_usr, $j2wp_mysql_pswd, 0) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
+  $j2wp_mysql_use_one_srv = get_option('j2wp_mysql_use_one_srv');
+
+  if ( $j2wp_mysql_use_one_srv == 0 )
+  {
+    // Testing SQL Settings
+    $CON = mysql_connect($j2wp_mysql_srv, $j2wp_mysql_usr, $j2wp_mysql_pswd, 0) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
+  }
 
   return $CON;  
 }
@@ -1489,7 +1504,16 @@ function j2wp_do_wp_connect()
   global $j2wp_wp_db_name;
   
   $j2wp_wp_db_name  =	get_option('j2wp_wp_db_name');
+  $j2wp_wp_mysql_srv_name = get_option('j2wp_wp_mysql_srv_name');
+  $j2wp_wp_db_user_name  =	get_option('j2wp_wp_db_user_name');
+  $j2wp_wp_db_user_pswd  =	get_option('j2wp_wp_db_user_pswd');
+  $j2wp_mysql_use_one_srv = get_option('j2wp_mysql_use_one_srv');
   
+  if ( $j2wp_mysql_use_one_srv != 0 )
+  {
+    $CON = mysql_connect($j2wp_wp_mysql_srv_name, $j2wp_wp_db_user_name, $j2wp_wp_db_user_pswd, 0) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
+  }
+
   // Database connection to WP DB
   mysql_select_db($j2wp_wp_db_name,$CON) or die(throwERROR("Cant select MySQL Database.".mysql_errno()." - ".mysql_error()));
 
@@ -1500,8 +1524,17 @@ function j2wp_do_joomla_connect()
 {
   global $CON;
   global $j2wp_joomla_db_name;
- 
+
   $j2wp_joomla_db_name  =	get_option('j2wp_joomla_db_name');
+  $j2wp_joomla_mysql_srv_name = get_option('j2wp_joomla_mysql_srv_name');
+  $j2wp_joomla_db_user_name  =	get_option('j2wp_joomla_db_user_name');
+  $j2wp_joomla_db_user_pswd  =	get_option('j2wp_joomla_db_user_pswd');
+  $j2wp_mysql_use_one_srv = get_option('j2wp_mysql_use_one_srv');
+
+  if ( $j2wp_mysql_use_one_srv != 0 )
+  {
+    $CON = mysql_connect($j2wp_joomla_mysql_srv_name, $j2wp_joomla_db_user_name, $j2wp_joomla_db_user_pswd, 0) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
+  }
 
   // And action, getting existing posts and write them in WP Table:
   mysql_select_db($j2wp_joomla_db_name,$CON) or die(throwERROR("Cant select MySQL Database.".mysql_errno()." - ".mysql_error()));

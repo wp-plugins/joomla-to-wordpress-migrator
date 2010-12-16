@@ -30,12 +30,18 @@ function joomla2wp_print_plugin_option_page()
   echo '  </div>' . "\n";
 */
 
+  $j2wp_srv_types = array(
+        '0'  => 'Single Server',
+        '1'  => 'Seperate Servers'
+        );
+
   $j2wp_cms_types = array(
         '0'  => 'Joomla',
         '1'  => 'Mambo'
         );
 
   // get the options
+  $j2wp_srv_type    = get_option('j2wp_mysql_use_one_srv');
   $j2wp_cms_type     = get_option('j2wp_cms_type');
   $cat_sel           = get_option("j2wp_cat_sel");
   $mysql_change_vars = get_option("j2wp_mysql_change_vars");
@@ -98,7 +104,7 @@ function joomla2wp_print_plugin_option_page()
   '              MySQL Server:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
-  '              <input type="text" size="15" name="new_j2wp_mysql_srv" value="' . get_option("j2wp_mysql_srv" ) . '" />  (normally <i>localhost</i>)' . "\n" .
+  '              <input type="text" size="35" name="new_j2wp_mysql_srv" value="' . get_option("j2wp_mysql_srv" ) . '" />  (normally <i>localhost</i>)' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
@@ -117,15 +123,56 @@ function joomla2wp_print_plugin_option_page()
   '              <input type="password" size="10" name="new_j2wp_mysql_pswd" value="' . get_option("j2wp_mysql_pswd" ) . '" />' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '              <td><label for="">' . __('Use one MySQL Server for both CMS:', 'joomla2wp') . '</label></td>' . "\n" .
+  '              <td><ul><li>' . "\n";
+
+  foreach( $j2wp_srv_types as $key => $value)
+  {
+    if ( $j2wp_srv_type == $key )
+      $checked = ' checked="checked" ';
+    else
+      $checked = ' ';
+    echo '      <input type="radio" class="j2wp-radio" name="new_j2wp_mysql_use_one_srv" id="j2wp_mysql_use_one_srv_' . $key . '" value="' . $key . '"' . $checked . ' />' . "\n";
+    echo '      <label for="j2wp_mysql_use_one_srv_' . $key . '">' . $value . '</label>' . "\n";
+  }
+
+  echo
+  '            </li></ul></td>' . "\n" .
+  '          </tr>' . "\n" .
   '          </table>' . "\n" .
   '          <p><b>' . $j2wp_cms_types[$j2wp_cms_type] . ' DB Params</b></p>' . "\n" .
   '          <table>' . "\n" .
   '          <tr>' . "\n" .
   '            <td>' . "\n" .
+  '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' MySQL Server Name:' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <input type="text" size="40" name="new_j2wp_joomla_mysql_srv_name" value="' . get_option("j2wp_joomla_mysql_srv_name" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
   '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' Database Name:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
-  '              <input type="text" size="10" name="new_j2wp_joomla_db_name" value="' . get_option("j2wp_joomla_db_name" ) . '" />' . "\n" .
+  '              <input type="text" size="40" name="new_j2wp_joomla_db_name" value="' . get_option("j2wp_joomla_db_name" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
+  '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' Database User Name:' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <input type="text" size="10" name="new_j2wp_joomla_db_user_name" value="' . get_option("j2wp_joomla_db_user_name" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
+  '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' Database User Password:' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <input type="password" size="10" name="new_j2wp_joomla_db_user_pswd" value="' . get_option("j2wp_joomla_db_user_pswd" ) . '" />' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
@@ -141,7 +188,7 @@ function joomla2wp_print_plugin_option_page()
   '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' Images Path:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
-  '              <input type="text" size="25" name="new_j2wp_joomla_images_path" value="' . get_option("j2wp_joomla_images_path" ) . '" />' . "\n" .
+  '              <input type="text" size="35" name="new_j2wp_joomla_images_path" value="' . get_option("j2wp_joomla_images_path" ) . '" />' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
@@ -149,7 +196,7 @@ function joomla2wp_print_plugin_option_page()
   '              ' . $j2wp_cms_types[$j2wp_cms_type] . ' Images folder:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
-  '              <input type="text" size="25" name="new_j2wp_joomla_images_folder" value="' . get_option("j2wp_joomla_images_folder" ) . '" />' . "\n" .
+  '              <input type="text" size="35" name="new_j2wp_joomla_images_folder" value="' . get_option("j2wp_joomla_images_folder" ) . '" />' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .
@@ -165,10 +212,34 @@ function joomla2wp_print_plugin_option_page()
   '          <table>' . "\n" .
   '          <tr>' . "\n" .
   '            <td>' . "\n" .
+  '              WP MySQL Server Name:' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <input type="text" size="40" name="new_j2wp_wp_mysql_srv_name" value="' . get_option("j2wp_wp_mysql_srv_name" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
   '              WP Database Name:' . "\n" .
   '            </td>' . "\n" .
   '            <td>' . "\n" .
-  '              <input type="text" size="10" name="new_j2wp_wp_db_name" value="' . get_option("j2wp_wp_db_name" ) . '" />' . "\n" .
+  '              <input type="text" size="40" name="new_j2wp_wp_db_name" value="' . get_option("j2wp_wp_db_name" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
+  '              WP Database User Name:' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <input type="text" size="10" name="new_j2wp_wp_db_user_name" value="' . get_option("j2wp_wp_db_user_name" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
+  '              WP Database User Password:' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <input type="password" size="10" name="new_j2wp_wp_db_user_pswd" value="' . get_option("j2wp_wp_db_user_pswd" ) . '" />' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .

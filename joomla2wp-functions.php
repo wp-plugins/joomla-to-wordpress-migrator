@@ -3,7 +3,7 @@
 Plugin Name: Joomla/Mambo to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
 Description: migrates all posts from Joomla/Mambo tables to WP tables
-Version: 1.3.9
+Version: 1.3.10
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -133,14 +133,21 @@ function register_j2wp_options()
   add_option( 'j2wp_cms_type', '0' );
   add_option( 'j2wp_cat_sel', 'on' );
   add_option( 'j2wp_mysql_srv', 'localhost' );
+  add_option( 'j2wp_mysql_use_one_srv', '0' );
   add_option( 'j2wp_mysql_usr', '' );
   add_option( 'j2wp_mysql_pswd', '' );
+  add_option( 'j2wp_joomla_mysql_srv_name', '' );
   add_option( 'j2wp_joomla_db_name', '' );
+  add_option( 'j2wp_joomla_db_usr_name', '' );
+  add_option( 'j2wp_joomla_db_usr_pswd', '' );
   add_option( 'j2wp_joomla_tb_prefix', 'jos_' );
   add_option( 'j2wp_joomla_images_path', '' );
   add_option( 'j2wp_joomla_images_folder', '/images/stories' );
   add_option( 'j2wp_joomla_web_url', '' );
+  add_option( 'j2wp_wp_mysql_srv_name', '' );
   add_option( 'j2wp_wp_db_name', '' );
+  add_option( 'j2wp_wp_db_user_name', '' );
+  add_option( 'j2wp_wp_db_user_pswd', '' );
   add_option( 'j2wp_wp_tb_prefix', 'wp_' );
   add_option( 'j2wp_wp_images_folder', '/wp-content/themes/twentyten/images' );
   add_option( 'j2wp_wp_web_url', '' );
@@ -367,14 +374,21 @@ function update_j2wp_options()
   update_option( 'j2wp_mysql_change_vars', $_POST['new_j2wp_mysql_change_vars'] );
   update_option( 'j2wp_cms_type', $_POST['new_j2wp_cms_type'] );
   update_option( 'j2wp_mysql_srv', $_POST['new_j2wp_mysql_srv'] );
+  update_option( 'j2wp_mysql_use_one_srv', $_POST['new_j2wp_mysql_use_one_srv'] );
   update_option( 'j2wp_mysql_usr', $_POST['new_j2wp_mysql_usr'] );
   update_option( 'j2wp_mysql_pswd', $_POST['new_j2wp_mysql_pswd'] );
+  update_option( 'j2wp_joomla_mysql_srv_name', $_POST['new_j2wp_joomla_mysql_srv_name'] );
   update_option( 'j2wp_joomla_db_name', $_POST['new_j2wp_joomla_db_name'] );
+  update_option( 'j2wp_joomla_db_user_name', $_POST['new_j2wp_joomla_db_user_name'] );
+  update_option( 'j2wp_joomla_db_user_pswd', $_POST['new_j2wp_joomla_db_user_pswd'] );
   update_option( 'j2wp_joomla_tb_prefix', $_POST['new_j2wp_joomla_tb_prefix'] );
   update_option( 'j2wp_joomla_images_path', $_POST['new_j2wp_joomla_images_path'] );
   update_option( 'j2wp_joomla_images_folder', $_POST['new_j2wp_joomla_images_folder'] );
   update_option( 'j2wp_joomla_web_url', $_POST['new_j2wp_joomla_web_url'] );
+  update_option( 'j2wp_wp_mysql_srv_name', $_POST['new_j2wp_wp_mysql_srv_name'] );
   update_option( 'j2wp_wp_db_name', $_POST['new_j2wp_wp_db_name'] );
+  update_option( 'j2wp_wp_db_user_name', $_POST['new_j2wp_wp_db_user_name'] );
+  update_option( 'j2wp_wp_db_user_pswd', $_POST['new_j2wp_wp_db_user_pswd'] );
   update_option( 'j2wp_wp_tb_prefix', $_POST['new_j2wp_wp_tb_prefix'] );
   update_option( 'j2wp_wp_images_folder', $_POST['new_j2wp_wp_images_folder'] );
   update_option( 'j2wp_wp_web_url', $_POST['new_j2wp_wp_web_url'] );
