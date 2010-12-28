@@ -17,6 +17,9 @@ global  $j2wp_mysql_srv,
 global  $j2wp_mysql_vars;
 
 
+require_once(ABSPATH . WPINC . '/registration.php');
+
+
 //  functions i8mported
 function throwERROR($msg) 
 {
@@ -28,8 +31,6 @@ function j2wp_prepare_mig( $func )
 {
   global  $j2wp_error_flag;
 
-  ob_end_flush();
-  ob_start();
   flush();
   ob_flush();
 
@@ -70,7 +71,6 @@ function j2wp_prepare_mig( $func )
       case 2:
         j2wp_print_output_page();
         ob_end_flush();
-        ob_start();
 
         //  get all cats from joomla
         $joomla_cats = j2wp_get_joomla_cats();
@@ -159,7 +159,7 @@ function j2wp_do_mig( $joomla_cats )
   //  migration of pages
   echo '<br />' . "\n";
   echo '<b><i>migrating pages</i></b>....<br /><br />' . "\n";
-  j2wp_mig_pages();
+  j2wp_mig_pages($j2wp_user_array);
 
   $mtime = microtime(); 
   $mtime_end = explode(' ',$mtime); 
@@ -178,7 +178,7 @@ function j2wp_do_mig( $joomla_cats )
 }
 
 
-function j2wp_mig_pages()
+function j2wp_mig_pages($j2wp_user_array)
 {
   global  $wpdb,
           $CON;
@@ -293,10 +293,17 @@ function j2wp_mig_pages()
     }
 
     //  get username
-    $key = array_search ( $R->created_by , $j2wp_user_array); 
+    foreach ( $j2wp_user_array as $joomla_user )
+    {
+      if ( $joomla_user['id'] == $R->created_by )
+      {
+        $user_id = $joomla_user['wp_id'];
+        break;
+      }
+    }
 
     $j2wp_pages[] = array(
-        'post_author' => $j2wp_user_array[$key]['username'],
+        'post_author' => $user_id,
         'post_content' => $post_content, 
         'post_date' => $R->created,
         'post_date_gmt' => $R->created,
@@ -390,6 +397,8 @@ function j2wp_mig_users()
           
   global  $j2wp_user_array;
 
+  unset($j2wp_user_array);
+
   if ( !$CON )
     $CON = j2wp_do_mysql_connect();
 
@@ -419,11 +428,22 @@ function j2wp_mig_users()
 
   echo '<h4>User Migration</h4><br />' . "\n";
 
+  $indx = 0;
   foreach ( $j2wp_user_array as $joomla_user )
   {
     echo 'migrate user: ' . $joomla_user['username'] . '   ----  ' . $joomla_user['usertype'] . '<br />' . "\n";
-    $random_password = wp_generate_password( 12, false );
-    $ret = wp_create_user( $joomla_user['username'], $random_password, $joomla_user['email'] );
+    $user_id = username_exists( $joomla_user['username'] );
+    if ( $user_id )
+    {
+      $j2wp_user_array[$indx]['wp_id'] = $user_id;
+    }
+    else
+    {
+      $random_password = wp_generate_password( 12, false );
+      $ret = wp_create_user( $joomla_user['username'], $random_password, $joomla_user['email'] );
+      $j2wp_user_array[$indx]['wp_id'] = $ret;
+    }
+    $indx++;
   }
   
   echo '<br /><br />' . "\n";
@@ -877,10 +897,17 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
     }
 
     //  get username
-    $key = array_search ( $R->created_by , $j2wp_user_array); 
+    foreach ( $j2wp_user_array as $joomla_user )
+    {
+      if ( $joomla_user['id'] == $R->created_by )
+      {
+        $user_id = $joomla_user['wp_id'];
+        break;
+      }
+    }
 
     $wp_posts[] = array(
-        'post_author' => $j2wp_user_array[$key]['username'],
+        'post_author' => $user_id,
         'post_category' => array($wp_cat_id),
         'post_content' => $post_content, 
         'post_date' => $R->created,
@@ -1503,7 +1530,8 @@ function j2wp_do_wp_connect()
   global $CON;
   global $j2wp_wp_db_name;
   
-  $j2wp_wp_db_name  =	get_option('j2wp_wp_db_name');
+  $j2wp_wp_db_name       =	get_option('j2wp_wp_db_name');
+  $j2wp_wp_db_charset    = get_option('j2wp_wp_db_charset');
   $j2wp_wp_mysql_srv_name = get_option('j2wp_wp_mysql_srv_name');
   $j2wp_wp_db_user_name  =	get_option('j2wp_wp_db_user_name');
   $j2wp_wp_db_user_pswd  =	get_option('j2wp_wp_db_user_pswd');
@@ -1512,6 +1540,11 @@ function j2wp_do_wp_connect()
   if ( $j2wp_mysql_use_one_srv != 0 )
   {
     $CON = mysql_connect($j2wp_wp_mysql_srv_name, $j2wp_wp_db_user_name, $j2wp_wp_db_user_pswd, 0) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
+  }
+
+  if ( function_exists('mysql_set_charset') )
+  {
+    mysql_set_charset($j2wp_wp_db_charset);
   }
 
   // Database connection to WP DB

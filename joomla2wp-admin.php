@@ -41,7 +41,7 @@ function joomla2wp_print_plugin_option_page()
         );
 
   // get the options
-  $j2wp_srv_type    = get_option('j2wp_mysql_use_one_srv');
+  $j2wp_srv_type     = get_option('j2wp_mysql_use_one_srv');
   $j2wp_cms_type     = get_option('j2wp_cms_type');
   $cat_sel           = get_option("j2wp_cat_sel");
   $mysql_change_vars = get_option("j2wp_mysql_change_vars");
@@ -216,6 +216,14 @@ function joomla2wp_print_plugin_option_page()
   '            </td>' . "\n" .
   '            <td>' . "\n" .
   '              <input type="text" size="40" name="new_j2wp_wp_mysql_srv_name" value="' . get_option("j2wp_wp_mysql_srv_name" ) . '" />' . "\n" .
+  '            </td>' . "\n" .
+  '          </tr>' . "\n" .
+  '          <tr>' . "\n" .
+  '            <td>' . "\n" .
+  '              WP MySQL Charset:' . "\n" .
+  '            </td>' . "\n" .
+  '            <td>' . "\n" .
+  '              <input type="text" size="10" name="new_j2wp_wp_db_charset" value="' . get_option("j2wp_wp_db_charset" ) . '" />' . "\n" .
   '            </td>' . "\n" .
   '          </tr>' . "\n" .
   '          <tr>' . "\n" .

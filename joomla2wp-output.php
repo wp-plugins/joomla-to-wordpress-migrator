@@ -4,7 +4,6 @@
 
 function j2wp_print_output_page()
 {
-  ob_start();
   echo '  <div class="j2wp_status_page">' . "\n";
   echo '   <br />' . "\n";
   echo '   <h3>Joomla To Wordpress Migration - Status Messages</h3>' . "\n";
