@@ -439,12 +439,19 @@ function j2wp_mig_users()
     }
     else
     {
-      $random_password = wp_generate_password( 12, false );
-      if ( empty($joomla_user['email']) )
-        $ret = wp_create_user( $joomla_user['username'], $random_password);
+      if ( email_exists($joomla_user['email']) AND !empty($joomla_user['email']) )
+      {
+        echo '<br />ERROR:  This users email address already exists - User can not be added !!!<br /><br />';
+      }
       else
-        $ret = wp_create_user( $joomla_user['username'], $random_password, $joomla_user['email'] );
-      $j2wp_user_array[$indx]['wp_id'] = $ret;
+      {
+        $random_password = wp_generate_password( 12, false );
+        if ( empty($joomla_user['email']) )
+          $ret = wp_create_user( $joomla_user['username'], $random_password);
+        else
+          $ret = wp_create_user( $joomla_user['username'], $random_password, $joomla_user['email'] );
+        $j2wp_user_array[$indx]['wp_id'] = $ret;
+      }
     }
     $indx++;
   }
