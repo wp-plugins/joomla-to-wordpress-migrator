@@ -440,7 +440,10 @@ function j2wp_mig_users()
     else
     {
       $random_password = wp_generate_password( 12, false );
-      $ret = wp_create_user( $joomla_user['username'], $random_password, $joomla_user['email'] );
+      if ( empty($joomla_user['email']) )
+        $ret = wp_create_user( $joomla_user['username'], $random_password);
+      else
+        $ret = wp_create_user( $joomla_user['username'], $random_password, $joomla_user['email'] );
       $j2wp_user_array[$indx]['wp_id'] = $ret;
     }
     $indx++;

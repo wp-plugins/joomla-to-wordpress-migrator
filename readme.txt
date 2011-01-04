@@ -5,7 +5,7 @@ Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
 Tags: joomla, mambo, wordpress, migrator, converter
 Requires at least: 2.7
 Tested up to: WP 3.0.1
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 
 A plugin to migrate content from Joomla/Mambo to Wordpress.
 
@@ -147,6 +147,9 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 = 1.4.0 =
 - error in user migration and post author fixed
 - feature added: wordpress mysql charset as option
+
+= 1.4.1 =
+- error fixed in user migration: check if email address is empty
 
 `<?php code(); // goes in backticks ?>`
 
