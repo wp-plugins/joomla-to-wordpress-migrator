@@ -157,9 +157,12 @@ function j2wp_do_mig( $joomla_cats )
   }
 
   //  migration of pages
-  echo '<br />' . "\n";
-  echo '<b><i>migrating pages</i></b>....<br /><br />' . "\n";
-  j2wp_mig_pages($j2wp_user_array);
+  if ( get_option('j2wp_page_sel') == 'on' )
+  {
+    echo '<br />' . "\n";
+    echo '<b><i>migrating pages</i></b>....<br /><br />' . "\n";
+    j2wp_mig_pages($j2wp_user_array);
+  }
 
   $mtime = microtime(); 
   $mtime_end = explode(' ',$mtime); 
@@ -193,6 +196,9 @@ function j2wp_mig_pages($j2wp_user_array)
   $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
   j2wp_do_joomla_connect();
 
+  $source_cpage = get_option('j2wp_joomla_db_charset');
+  $target_cpage = get_option('j2wp_wp_db_charset') . '//IGNORE//TRANSLIT';
+
   $query  = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "content` WHERE catid = 0 AND state = 1 ORDER BY `created` ";
   $result = mysql_query($query, $CON);
   if ( !$result )
@@ -216,6 +222,28 @@ function j2wp_mig_pages($j2wp_user_array)
     else
     {
       $R->alias = sanitize_title($R->title); 
+    }
+
+    //  do codepage conversion
+    if ( intval(phpversion()) >= 5 )
+    {
+      // use iconv
+      if ($R->fulltext)
+      {
+        $R->fulltext = iconv( $source_cpage, $target_cpage, $R->fulltext );
+      }
+      if ($R->introtext)
+      {
+        $R->introtext = iconv( $source_cpage, $target_cpage, $R->introtext );
+      }
+    }
+    else
+    {
+      // use utf8_encode function
+      if ($R->fulltext)
+        $R->fulltext = utf8_encode($R->fulltext);
+      if ($R->introtext)
+        $R->introtext = utf8_encode($R->introtext);
     }
 
     if($R->fulltext AND $R->introtext)
@@ -426,6 +454,20 @@ function j2wp_mig_users()
   $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
   j2wp_do_wp_connect();
 
+  if ( get_option('j2wp_users_sel') == 'off' )
+  {
+    foreach ( $j2wp_user_array as $joomla_user )
+    {
+      $user_id = username_exists( $joomla_user['username'] );
+      if ( $user_id )
+      {
+        $j2wp_user_array[$indx]['wp_id'] = $user_id;
+      }
+    }
+
+    return $j2wp_user_array;
+  }
+
   echo '<h4>User Migration</h4><br />' . "\n";
 
   $indx = 0;
@@ -451,6 +493,9 @@ function j2wp_mig_users()
         else
           $ret = wp_create_user( $joomla_user['username'], $random_password, $joomla_user['email'] );
         $j2wp_user_array[$indx]['wp_id'] = $ret;
+
+        // set user meta data joomlapass for first login
+        add_user_meta( $ret, 'joomlapass', $joomla_user['password'] );
       }
     }
     $indx++;
@@ -811,6 +856,9 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
   $STORAGE   = array();
   $wp_posts  = array();
 
+  $source_cpage = get_option('j2wp_joomla_db_charset');
+  $target_cpage = get_option('j2wp_wp_db_charset') . '//IGNORE//TRANSLIT';
+
   $post_counter = 0;
   while($R = mysql_fetch_object($result)) 
   {
@@ -830,6 +878,28 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
     else
     {
       $R->alias = sanitize_title($R->title); 
+    }
+
+    //  do codepage conversion
+    if ( intval(phpversion()) >= 5 )
+    {
+      // use iconv
+      if ($R->fulltext)
+      {
+        $R->fulltext = iconv( $source_cpage, $target_cpage, $R->fulltext );
+      }
+      if ($R->introtext)
+      {
+        $R->introtext = iconv( $source_cpage, $target_cpage, $R->introtext );
+      }
+    }
+    else
+    {
+      // use utf8_encode function
+      if ($R->fulltext)
+        $R->fulltext = utf8_encode($R->fulltext);
+      if ($R->introtext)
+        $R->introtext = utf8_encode($R->introtext);
     }
 
     if($R->fulltext AND $R->introtext)
@@ -1584,5 +1654,59 @@ function j2wp_do_joomla_connect()
 
   return;
 }
+
+
+function j2wp_joomla_mig_auth( $user, $username, $password ) 
+{
+   if ( is_a($user, 'WP_User') ) { return $user; }
+
+   // check existence of required parameters
+	if ( empty($username) || empty($password) ) return $user;
+	
+	// retrieve user data
+	$userdata = get_user_by('login', $username);
+	if ( !$userdata ) return $user;
+   if ( !$userdata->joomlapass ) return $user;
+
+   // authenticate against stored joomla password
+   if ( auth_joomla( $username, $password, $userdata->joomlapass ) ) {
+
+      // update WP user password
+      $user_id = $userdata->ID;
+      wp_update_user( array ('ID' => $user_id, 'user_pass' => $password) ) ;
+
+      // rename joomlapass to joomlapassbak to avoid rewrite WP password hash repeatedly
+      update_user_meta( $user_id, 'joomlapassbak', $userdata->joomlapass );
+      delete_user_meta( $user_id, 'joomlapass' );
+
+   }
+   
+   return $user;
+
+}
+
+
+// this function should be changed if passwords are encrypted by non default Joomla encryption method
+// default method is md5 hash of password + salt
+// $joomlapass contains md5 hash and salt separated by colon ':'
+// for other methods of joomla encryption methods refer to Joomla JUserHelper class
+
+function auth_joomla( $username, $password, $joomlapass ) {
+
+	$parts	= explode( ':', $joomlapass );
+	$joomlahash	= $parts[0];
+	$joomlasalt	= $parts[1];
+	
+	$passwhash = ($joomlasalt) ? md5($password.$joomlasalt) : md5($password);
+	
+   if ( $joomlahash == $passwhash ) {
+      return true;
+   } else {
+      return false;
+   }
+   
+}
+
+
 
 ?>

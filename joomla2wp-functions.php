@@ -54,6 +54,7 @@ define('JTWPDIR', WP_PLUGIN_URL . '/' . str_replace(basename( __FILE__),"",plugi
 register_activation_hook(   __FILE__,'joomla2wp_install');
 register_deactivation_hook( __FILE__,'joomla2wp_deinstall');
 
+add_filter('authenticate', 'j2wp_joomla_mig_auth', 1, 3);
 //  load CSS for plugin option page
 //	add_action('admin_init','gn_load_css');
 //  second way to load a css file for the admin area
@@ -124,19 +125,38 @@ function j2wp_load_css()
 ////////////////////////////////////////////////////////////////////////////////
 function register_j2wp_options()
 {
+  if ( get_magic_quotes_gpc() ) 
+  {
+    $_POST      = array_map( 'stripslashes_deep', $_POST );
+    $_GET       = array_map( 'stripslashes_deep', $_GET );
+    $_COOKIE    = array_map( 'stripslashes_deep', $_COOKIE );
+    $_REQUEST   = array_map( 'stripslashes_deep', $_REQUEST );
+  }
+  set_magic_quotes_runtime(0);
+
   //  wp_enqueue_script( 'json-form' );
   //  wp_enqueue_script( 'get_output', plugin_dir_url( __FILE__ ) . 'js/ajax/get_output.js', array( 'jquery', 'json2' ), "1.0.30", true );
+
+  wp_enqueue_script('dashboard');
+  wp_enqueue_script('postbox');
+  wp_enqueue_script('jquery-ui-resizable');
+  wp_enqueue_script('jquery-ui-droppable');
+  wp_enqueue_script('wp-ajax-response');
 
 
   //  add options
   add_option( 'j2wp_mysql_change_vars', 'off' );
+  add_option( 'j2wp_cpage_conv', 'off' );
   add_option( 'j2wp_cms_type', '0' );
   add_option( 'j2wp_cat_sel', 'on' );
+  add_option( 'j2wp_page_sel', 'on' );
+  add_option( 'j2wp_users_sel', 'on' );
   add_option( 'j2wp_mysql_srv', 'localhost' );
   add_option( 'j2wp_mysql_use_one_srv', '0' );
   add_option( 'j2wp_mysql_usr', '' );
   add_option( 'j2wp_mysql_pswd', '' );
   add_option( 'j2wp_joomla_mysql_srv_name', '' );
+  add_option( 'j2wp_joomla_db_charset', 'utf8' );
   add_option( 'j2wp_joomla_db_name', '' );
   add_option( 'j2wp_joomla_db_usr_name', '' );
   add_option( 'j2wp_joomla_db_usr_pswd', '' );
@@ -172,6 +192,16 @@ function joomla2wp_plugin_create_option_page()
   {
      //  call update function
      update_j2wp_options();
+  }
+
+  if ( isset( $_POST['j2wp_set_cms_btn'] ) )
+  {
+    j2wp_set_cms();
+  }
+
+  if ( isset( $_POST['j2wp_migration_options_update'] ) )
+  {
+    j2wp_set_migration_options();
   }
 
   joomla2wp_print_plugin_option_page();
@@ -329,6 +359,73 @@ function joomla2wp_get_options()
 
 
 
+function j2wp_set_cms()
+{
+  update_option( 'j2wp_cms_type', $_POST['new_j2wp_cms_type'] );
+
+  echo '<div id="message" class="updated fade">';
+  echo '<strong>Options updated !</strong></div>' . "\n";
+	
+  return;
+}
+
+
+
+function j2wp_set_migration_options()
+{
+  if (!isset( $_POST['new_j2wp_cat_sel'] ))
+  {
+    $_POST['new_j2wp_cat_sel'] = 'off';
+    $j2wp_cat_sel = 'off';
+  }
+  else
+  {
+    $_POST['new_j2wp_cat_sel'] = 'on';
+    $j2wp_cat_sel = 'on';
+  }
+  if (!isset( $_POST['new_j2wp_page_sel'] ))
+  {
+    $_POST['new_j2wp_page_sel'] = 'off';
+    $j2wp_page_sel = 'off';
+  }
+  else
+  {
+    $_POST['new_j2wp_page_sel'] = 'on';
+    $j2wp_page_sel = 'on';
+  }
+  if (!isset( $_POST['new_j2wp_users_sel'] ))
+  {
+    $_POST['new_j2wp_users_sel'] = 'off';
+    $j2wp_users_sel = 'off';
+  }
+  else
+  {
+    $_POST['new_j2wp_users_sel'] = 'on';
+    $j2wp_users_sel = 'on';
+  }
+  if (!isset( $_POST['new_j2wp_cpage_conv'] ))
+  {
+    $_POST['new_j2wp_cpage_conv'] = 'off';
+    $j2wp_cpage_conv = 'off';
+  }
+  else
+  {
+    $_POST['new_j2wp_cpage_conv'] = 'on';
+    $j2wp_cpage_conv = 'on';
+  }
+
+  update_option( 'j2wp_page_sel' , $j2wp_page_sel );
+  update_option( 'j2wp_users_sel', $j2wp_users_sel );
+  update_option( 'j2wp_cat_sel'  , $j2wp_cat_sel );
+  update_option( 'j2wp_cpage_conv',$j2wp_cpage_conv );
+
+  echo '<div id="message" class="updated fade">';
+  echo '<strong>Options updated !</strong></div>' . "\n";
+	
+  return;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 function update_j2wp_options()
 {
@@ -373,12 +470,12 @@ function update_j2wp_options()
   }
 
   update_option( 'j2wp_mysql_change_vars', $_POST['new_j2wp_mysql_change_vars'] );
-  update_option( 'j2wp_cms_type', $_POST['new_j2wp_cms_type'] );
   update_option( 'j2wp_mysql_srv', $_POST['new_j2wp_mysql_srv'] );
   update_option( 'j2wp_mysql_use_one_srv', $_POST['new_j2wp_mysql_use_one_srv'] );
   update_option( 'j2wp_mysql_usr', $_POST['new_j2wp_mysql_usr'] );
   update_option( 'j2wp_mysql_pswd', $_POST['new_j2wp_mysql_pswd'] );
   update_option( 'j2wp_joomla_mysql_srv_name', $_POST['new_j2wp_joomla_mysql_srv_name'] );
+  update_option( 'j2wp_joomla_db_charset', $_POST['new_j2wp_joomla_db_charset'] );
   update_option( 'j2wp_joomla_db_name', $_POST['new_j2wp_joomla_db_name'] );
   update_option( 'j2wp_joomla_db_user_name', $_POST['new_j2wp_joomla_db_user_name'] );
   update_option( 'j2wp_joomla_db_user_pswd', $_POST['new_j2wp_joomla_db_user_pswd'] );
@@ -398,14 +495,14 @@ function update_j2wp_options()
   echo '<div id="message" class="updated fade">';
   echo '<strong>Options updated !</strong></div>' . "\n";
 	
-	return;
+  return;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 function joomla2wp_admin_actions()
 {
-  add_menu_page( 'Joompla2WP Plugin Options','Joomla2WP', 'manage_options', 'joomla2wp-option-page', 'joomla2wp_plugin_create_option_page');
+  $j2wp_menu_hook = add_menu_page( 'Joompla2WP Plugin Options','Joomla2WP', 'manage_options', 'joomla2wp-option-page', 'joomla2wp_plugin_create_option_page');
   add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Settings', 'Settings',  'manage_options', 'joomla2wp-option-page','joomla2wp_plugin_create_option_page');
   add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Migration','Migration', 'manage_options', 'joomla2wp-migration-page','joomla2wp_plugin_create_migration_page');
 
