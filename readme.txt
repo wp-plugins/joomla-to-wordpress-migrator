@@ -160,7 +160,7 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 - design changes for plugin admin pages
 - character codepage conversion from joomla to wordpress
 - feature added: joomla user password migration to wordpress
-
+- error during create menu solved
 
 `<?php code(); // goes in backticks ?>`
 
