@@ -2,8 +2,8 @@
 /*
 Plugin Name: Joomla/Mambo to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
-Description: migrates all posts from Joomla/Mambo tables to WP tables
-Version: 1.4.2
+Description: migrates/imports all posts/pages from Joomla/Mambo tables to WP tables
+Version: 1.5.0
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -75,31 +75,12 @@ if ($phpver < '4.1.0') {
 	$_POST = $HTTP_POST_VARS;
 	$_SERVER = $HTTP_SERVER_VARS;
 }
-if ($phpver >= '4.0.4pl1' && strstr($_SERVER["HTTP_USER_AGENT"],'compatible')) {
-	if (extension_loaded('zlib')) {
-		ob_end_clean();
-		ob_start('ob_gzhandler');
-	}
-} else if ($phpver > '4.0') {
-	if (strstr($HTTP_SERVER_VARS['HTTP_ACCEPT_ENCODING'], 'gzip')) {
-		if (extension_loaded('zlib')) {
-			$do_gzip_compress = TRUE;
-			ob_start();
-			ob_implicit_flush(0);
-			//header('Content-Encoding: gzip');
-		}
-	}
-}
-
 $phpver = explode(".", $phpver);
 $phpver = "$phpver[0]$phpver[1]";
 if ($phpver >= 41) {
 	$PHP_SELF = $_SERVER['PHP_SELF'];
 }
 
-if (!ini_get("register_globals")) {
-	import_request_variables('GPC');
-}
 
 
 
@@ -502,9 +483,9 @@ function update_j2wp_options()
 ////////////////////////////////////////////////////////////////////////////////
 function joomla2wp_admin_actions()
 {
-  $j2wp_menu_hook = add_menu_page( 'Joompla2WP Plugin Options','Joomla2WP', 'manage_options', 'joomla2wp-option-page', 'joomla2wp_plugin_create_option_page');
-  add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Settings', 'Settings',  'manage_options', 'joomla2wp-option-page','joomla2wp_plugin_create_option_page');
-  add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Migration','Migration', 'manage_options', 'joomla2wp-migration-page','joomla2wp_plugin_create_migration_page');
+//  $j2wp_menu_hook = add_menu_page( 'Joompla2WP Plugin Options','Joomla2WP', 'manage_options', 'joomla2wp-option-page', 'joomla2wp_plugin_create_option_page');
+//  add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Settings', 'Settings',  'manage_options', 'joomla2wp-option-page','joomla2wp_plugin_create_option_page');
+//  add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Migration','Migration', 'manage_options', 'joomla2wp-migration-page','joomla2wp_plugin_create_migration_page');
 
   return;    
 }
