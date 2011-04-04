@@ -3,7 +3,7 @@
 Plugin Name: Joomla/Mambo to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
 Description: migrates/imports all posts/pages from Joomla/Mambo tables to WP tables
-Version: 1.5.0
+Version: 1.5.1
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -483,9 +483,9 @@ function update_j2wp_options()
 ////////////////////////////////////////////////////////////////////////////////
 function joomla2wp_admin_actions()
 {
-//  $j2wp_menu_hook = add_menu_page( 'Joompla2WP Plugin Options','Joomla2WP', 'manage_options', 'joomla2wp-option-page', 'joomla2wp_plugin_create_option_page');
-//  add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Settings', 'Settings',  'manage_options', 'joomla2wp-option-page','joomla2wp_plugin_create_option_page');
-//  add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Migration','Migration', 'manage_options', 'joomla2wp-migration-page','joomla2wp_plugin_create_migration_page');
+  $j2wp_menu_hook = add_menu_page( 'Joompla2WP Plugin Options','Joomla2WP', 'manage_options', 'joomla2wp-option-page', 'joomla2wp_plugin_create_option_page');
+  add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Settings', 'Settings',  'manage_options', 'joomla2wp-option-page','joomla2wp_plugin_create_option_page');
+  add_submenu_page( 'joomla2wp-option-page', 'Joomla To Wordpress Migrator - Migration','Migration', 'manage_options', 'joomla2wp-migration-page','joomla2wp_plugin_create_migration_page');
 
   return;    
 }
