@@ -42,13 +42,36 @@ function j2wp_prepare_mig( $func )
   }
 
   // check if Plugin Options are set
-  if ( !((strlen(get_option( 'j2wp_mysql_srv' )) != 0) AND
-       (strlen(get_option( 'j2wp_mysql_usr' )) != 0) AND
-       (strlen(get_option( 'j2wp_mysql_pswd' )) != 0) AND
-       (strlen(get_option( 'j2wp_joomla_db_name' )) != 0) AND
-       (strlen(get_option( 'j2wp_joomla_tb_prefix' )) != 0) AND
-       (strlen(get_option( 'j2wp_wp_db_name' )) != 0) AND
-       (strlen(get_option( 'j2wp_wp_tb_prefix' )) != 0)) )
+  $j2wp_seperate_servers      = get_option('j2wp_mysql_use_one_srv');
+  $j2wp_joomla_db_name        =	get_option('j2wp_joomla_db_name');
+  $j2wp_joomla_mysql_srv_name = get_option('j2wp_joomla_mysql_srv_name');
+  $j2wp_joomla_db_user_name   =	get_option('j2wp_joomla_db_user_name');
+  $j2wp_joomla_db_user_pswd   =	get_option('j2wp_joomla_db_user_pswd');
+  $j2wp_wp_db_name            =	get_option('j2wp_wp_db_name');
+  $j2wp_wp_mysql_srv_name     = get_option('j2wp_wp_mysql_srv_name');
+  $j2wp_wp_db_user_name       =	get_option('j2wp_wp_db_user_name');
+  $j2wp_wp_db_user_pswd       =	get_option('j2wp_wp_db_user_pswd');
+  $j2wp_mysql_srv             = get_option("j2wp_mysql_srv");
+  $j2wp_mysql_usr             = get_option("j2wp_mysql_usr");
+  $j2wp_mysql_pswd            = get_option("j2wp_mysql_pswd");
+
+  if ( ( (!$j2wp_seperate_servers) AND (! (strlen($j2wp_mysql_srv)  AND
+                                           strlen($j2wp_mysql_usr)  AND
+                                           strlen($j2wp_mysql_pswd) AND
+                                           strlen(get_option( 'j2wp_joomla_db_name' )) AND
+                                           strlen(get_option( 'j2wp_joomla_tb_prefix' )) AND
+                                           strlen(get_option( 'j2wp_wp_db_name' )) AND
+                                           strlen(get_option( 'j2wp_wp_tb_prefix' )) 
+                                                           )) ) OR 
+       ( ($j2wp_seperate_servers ) AND (! (strlen($j2wp_joomla_db_name) AND
+                                           strlen($j2wp_joomla_mysql_srv_name) AND
+                                           strlen($j2wp_joomla_db_user_name) AND
+                                           strlen($j2wp_joomla_db_user_pswd) AND
+                                           strlen($j2wp_wp_db_name) AND
+                                           strlen($j2wp_wp_mysql_srv_name) AND
+                                           strlen($j2wp_wp_db_user_name) AND
+                                           strlen($j2wp_wp_db_user_pswd) 
+                                                           )) )  )
   {
     $j2wp_error_flag = -70000;
   }
@@ -202,7 +225,10 @@ function j2wp_mig_pages($j2wp_user_array)
   $query  = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "content` WHERE catid = 0 AND state = 1 ORDER BY `created` ";
   $result = mysql_query($query, $CON);
   if ( !$result )
-    echo mysql_error();
+  {
+    echo 'No static pages found !!!<br /><br />' . "\n";
+    return;
+  }
   $post_counter = 0;
   while($R = mysql_fetch_object($result)) 
   {
@@ -320,14 +346,22 @@ function j2wp_mig_pages($j2wp_user_array)
       }
     }
 
-    //  get username
-    foreach ( $j2wp_user_array as $joomla_user )
+    if ( !empty($R->created_by) )
     {
-      if ( $joomla_user['id'] == $R->created_by )
+      //  get username
+      foreach ( $j2wp_user_array as $joomla_user )
       {
-        $user_id = $joomla_user['wp_id'];
-        break;
+        if ( $joomla_user['id'] == $R->created_by )
+        {
+          $user_id = $joomla_user['wp_id'];
+          break;
+        }
       }
+    }
+    else
+    {
+      $user_name = 'adminwp';
+      $user_id = username_exists( $user_name );
     }
 
     $j2wp_pages[] = array(
@@ -976,14 +1010,22 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
       }
     }
 
-    //  get username
-    foreach ( $j2wp_user_array as $joomla_user )
+    if ( !empty($R->created_by) )
     {
-      if ( $joomla_user['id'] == $R->created_by )
+      //  get username
+      foreach ( $j2wp_user_array as $joomla_user )
       {
-        $user_id = $joomla_user['wp_id'];
-        break;
+        if ( $joomla_user['id'] == $R->created_by )
+        {
+          $user_id = $joomla_user['wp_id'];
+          break;
+        }
       }
+    }
+    else
+    {
+      $user_name = 'adminwp';
+      $user_id = username_exists( $user_name );
     }
 
     $wp_posts[] = array(
@@ -1601,6 +1643,14 @@ function j2wp_do_mysql_connect()
     // Testing SQL Settings
     $CON = mysql_connect($j2wp_mysql_srv, $j2wp_mysql_usr, $j2wp_mysql_pswd, 0) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
   }
+  else
+  {
+    $j2wp_joomla_db_name        = get_option('j2wp_joomla_db_name');
+    $j2wp_joomla_mysql_srv_name	= get_option('j2wp_joomla_mysql_srv_name');
+    $j2wp_joomla_db_user_name  	= get_option('j2wp_joomla_db_user_name');
+    $j2wp_joomla_db_user_pswd  	= get_option('j2wp_joomla_db_user_pswd');
+    $CON = mysql_connect($j2wp_joomla_mysql_srv_name, $j2wp_joomla_db_user_name, $j2wp_joomla_db_user_pswd, 0) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
+  }
 
   return $CON;  
 }
@@ -1649,7 +1699,7 @@ function j2wp_do_joomla_connect()
     $CON = mysql_connect($j2wp_joomla_mysql_srv_name, $j2wp_joomla_db_user_name, $j2wp_joomla_db_user_pswd, 0) or die(throwERROR("Cant get MySQL Connection.".mysql_errno()." - ".mysql_error()));
   }
 
-  // And action, getting existing posts and write them in WP Table:
+  // Database connection to Joomla/Mambo DB
   mysql_select_db($j2wp_joomla_db_name,$CON) or die(throwERROR("Cant select MySQL Database.".mysql_errno()." - ".mysql_error()));
 
   return;
