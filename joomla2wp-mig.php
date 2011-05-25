@@ -222,6 +222,9 @@ function j2wp_mig_pages($j2wp_user_array)
   $source_cpage = get_option('j2wp_joomla_db_charset');
   $target_cpage = get_option('j2wp_wp_db_charset') . '//IGNORE//TRANSLIT';
 
+  $query = "SET NAMES utf8";
+  mysql_query($query, $CON);
+
   $query  = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "content` WHERE catid = 0 AND state = 1 ORDER BY `created` ";
   $result = mysql_query($query, $CON);
   if ( !$result )
@@ -251,25 +254,31 @@ function j2wp_mig_pages($j2wp_user_array)
     }
 
     //  do codepage conversion
-    if ( intval(phpversion()) >= 5 )
+    $cpage_conv = get_option('j2wp_cpage_conv');
+    if ( $cpage_conv == 'on' )
     {
-      // use iconv
-      if ($R->fulltext)
+      if ( intval(phpversion()) >= 5 )
       {
-        $R->fulltext = iconv( $source_cpage, $target_cpage, $R->fulltext );
+        // use iconv
+        $R->title  = iconv( $source_cpage, $target_cpage, $R->title );
+        if ($R->fulltext)
+        {
+          $R->fulltext = iconv( $source_cpage, $target_cpage, $R->fulltext );
+        }
+        if ($R->introtext)
+        {
+          $R->introtext = iconv( $source_cpage, $target_cpage, $R->introtext );
+        }
       }
-      if ($R->introtext)
+      else
       {
-        $R->introtext = iconv( $source_cpage, $target_cpage, $R->introtext );
+        // use utf8_encode function
+        $R->title = utf8_encode($R->title);
+        if ($R->fulltext)
+          $R->fulltext = utf8_encode($R->fulltext);
+        if ($R->introtext)
+          $R->introtext = utf8_encode($R->introtext);
       }
-    }
-    else
-    {
-      // use utf8_encode function
-      if ($R->fulltext)
-        $R->fulltext = utf8_encode($R->fulltext);
-      if ($R->introtext)
-        $R->introtext = utf8_encode($R->introtext);
     }
 
     if($R->fulltext AND $R->introtext)
@@ -389,6 +398,9 @@ function j2wp_mig_pages($j2wp_user_array)
   //  insert pages to wp
   $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
   j2wp_do_wp_connect();
+
+  $query = "SET NAMES utf8";
+  mysql_query($query, $CON);
 
   $cnt = 0;
   foreach ( $j2wp_pages as $j2wp_page )
@@ -915,25 +927,31 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
     }
 
     //  do codepage conversion
-    if ( intval(phpversion()) >= 5 )
+    $cpage_conv = get_option('j2wp_cpage_conv');
+    if ( $cpage_conv == 'on' )
     {
-      // use iconv
-      if ($R->fulltext)
+      if ( intval(phpversion()) >= 5 )
       {
-        $R->fulltext = iconv( $source_cpage, $target_cpage, $R->fulltext );
+        $R->title  = iconv( $source_cpage, $target_cpage, $R->title );
+        // use iconv
+        if ($R->fulltext)
+        {
+          $R->fulltext = iconv( $source_cpage, $target_cpage, $R->fulltext );
+        }
+        if ($R->introtext)
+        {
+          $R->introtext = iconv( $source_cpage, $target_cpage, $R->introtext );
+        }
       }
-      if ($R->introtext)
+      else
       {
-        $R->introtext = iconv( $source_cpage, $target_cpage, $R->introtext );
+        // use utf8_encode function
+        $R->title = utf8_encode($R->title);
+        if ($R->fulltext)
+          $R->fulltext = utf8_encode($R->fulltext);
+        if ($R->introtext)
+          $R->introtext = utf8_encode($R->introtext);
       }
-    }
-    else
-    {
-      // use utf8_encode function
-      if ($R->fulltext)
-        $R->fulltext = utf8_encode($R->fulltext);
-      if ($R->introtext)
-        $R->introtext = utf8_encode($R->introtext);
     }
 
     if($R->fulltext AND $R->introtext)

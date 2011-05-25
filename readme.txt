@@ -4,8 +4,8 @@ Author Uri: http://it-gnoth.de
 Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
 Tags: joomla, mambo, wordpress, migrator, converter, import
 Requires at least: 2.7
-Tested up to: WP 3.0.1
-Stable tag: 1.5.2
+Tested up to: WP 3.1
+Stable tag: 1.5.4
 
 A plugin to migrate content from Joomla/Mambo to Wordpress.
 
@@ -66,6 +66,9 @@ You have to copy first the images from your Joomla installation to your wordpres
 = The migrated content is incomplete or has line breaks in the sentences. =
 
 Check your source content on the Joomla side for special characters and the Code Page you are using for your content. THey may cause this problem.
+
+= Do I have to change the charset if I have latin1_swedish_ci in my Joomla/Mambo tables? =
+If you have a table collation of latin1_swedish_ci use the codepage translation from latin1 to utf8
 
 == Screenshots ==
 
@@ -168,6 +171,12 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 = 1.5.2 =
 - problem with no static pages removed
 - problem with seperate mysql servers removed
+
+= 1.5.3 =
+- plugin description changed
+
+= 1.5.4 =
+- code page conversion changed
 
 `<?php code(); // goes in backticks ?>`
 
