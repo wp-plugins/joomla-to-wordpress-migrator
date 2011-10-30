@@ -35,6 +35,9 @@ features:
 - changes the imgage urls to point to the new image location
 - {mosimage} support
 
+I am looking for someone to continue with this plugin. If you are interested to develop this plugin in future - please write to office@it-gnoth.de.
+
+
 == Support ==
 
 Please take a look at **[Support page](http://it-gnoth.de/projekte/wordpress/wp-support/)** 
