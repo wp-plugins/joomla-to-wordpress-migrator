@@ -10,8 +10,7 @@ function j2wp_print_output_page()
   echo '   <br /><br />' . "\n";
   echo '  </div>' . "\n";
 
-  ob_flush();
-  ob_end_clean();
+  flush();
 
   return;
 }

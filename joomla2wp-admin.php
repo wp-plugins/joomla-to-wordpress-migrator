@@ -34,6 +34,7 @@ function joomla2wp_print_plugin_option_page()
   $cat_sel           = get_option("j2wp_cat_sel");
   $page_sel          = get_option("j2wp_page_sel");
   $users_sel         = get_option("j2wp_users_sel");
+  $joomgallery_sel   = get_option("j2wp_joomgallery_sel");
   $mysql_change_vars = get_option("j2wp_mysql_change_vars");
   $j2wp_cpage_conv   = get_option("j2wp_cpage_conv");
 
@@ -71,6 +72,15 @@ function joomla2wp_print_plugin_option_page()
   else
   {
     $users_sel_checkbox = ' ';
+  }
+
+  if ( $joomgallery_sel == 'on' )
+  {
+    $joomgallery_sel_checkbox = ' checked="checked" ';
+  }
+  else
+  {
+    $joomgallery_sel_checkbox = ' ';
   }
 
   if ( $j2wp_cpage_conv == 'on' )
@@ -400,7 +410,22 @@ function joomla2wp_print_plugin_option_page()
   '                      <td>' . "\n" .
   '	                   <input type="checkbox" name="new_j2wp_users_sel" value="open" ' . $users_sel_checkbox . '/>' . "\n" .
   '                      </td>' . "\n" .
-  '                    </tr>' . "\n" .
+  '                    </tr>' . "\n";
+  
+  if ( $j2wp_cms_types[$j2wp_cms_type] == 'Joomla' )
+  {
+    echo
+    '                    <tr>' . "\n" .
+    '                      <td>' . "\n" .
+    '                        Migrate JoomGallery Images:' . "\n" .
+    '                      </td>' . "\n" .
+    '                      <td>' . "\n" .
+    '	                   <input type="checkbox" name="new_j2wp_joomgallery_sel" value="open" ' . $joomgallery_sel_checkbox . '/>' . "\n" .
+    '                      </td>' . "\n" .
+    '                    </tr>' . "\n";
+  }
+  
+  echo
   '                    <tr>' . "\n" .
   '                      <td>' . "\n" .
   '                        Do codepage conversion:' . "\n" .
@@ -524,6 +549,7 @@ function joomla2wp_print_plugin_migration_page()
   // get the options
   $j2wp_cms_type     = get_option('j2wp_cms_type');
   $cat_sel           = get_option('j2wp_cat_sel');
+  $joomgallery_sel   = get_option("j2wp_joomgallery_sel");
 
   if ( $cat_sel == 'on' )
   {
@@ -547,27 +573,41 @@ function joomla2wp_print_plugin_migration_page()
   '        ' . __('This is needed so that wordpress can determine the correct mime type of the images.', 'joomla2wp') . "\n" .
   '      </p>' . "\n" .
   '      </div><br />' . "\n" .
-  '      <br />' . "\n";
-echo '<h3>Data Migration</h3>' . "\n";
-echo '<br />' . "\n";
-  _e('To start the migration of ' . $j2wp_cms_types[$j2wp_cms_type] . ' posts to Wordpress - press the button below!', 'joomla2wp'); 
-  echo "\n";
-echo '<br />' . "\n";
-echo '<div id="j2wp_migrator_btn">' . "\n";
-echo '<p class="submit">';
-echo '<input type="submit" name="do_mig_btn" value="Start Migration to WP" />';
-echo '</p>' . "\n";
-echo '</div><br /><hr /><br />' . "\n";
-echo '<h3>URLs in Posts Migration</h3>' . "\n";
-echo '<br />' . "\n";
-  _e('To change the URLs in the content from ' . $j2wp_cms_types[$j2wp_cms_type] . ' posts to WP posts - press the button below!', 'joomla2wp');
-  echo "\n";
-echo '<br />' . "\n";
-echo '<p class="submit">';
-echo '<input type="submit" name="change_urls_btn" value="Change Urls" />';
-echo '</p>';
-echo '</form>';
-echo '</div>   <!--- DIV wrap END  --->' . "\n";
+  '      <br />' . "\n" .
+  '<h3>Data Migration</h3>' . "\n" .
+  '<br />' . "\n" .
+  _e('To start the migration of ' . $j2wp_cms_types[$j2wp_cms_type] . ' posts to Wordpress - press the button below!', 'joomla2wp') . "\n" .
+  '<br />' . "\n" .
+  '<div id="j2wp_migrator_btn">' . "\n" .
+  '<p class="submit">' .
+  '<input type="submit" name="do_mig_btn" value="Start Migration to WP" />' .
+  '</p>' . "\n" .
+  '</div>' . "\n";
+  
+  if ( ($j2wp_cms_types[$j2wp_cms_type] == 0) AND ($joomgallery_sel == 'on') )
+  {
+    echo
+    '<br />' . "\n" .
+    _e('To start the migration of JoomGallery data to Wordpress - press the button below!', 'joomla2wp') . "\n" .
+    '<br />' . "\n" .
+    '<div class="j2wp_migrator_btn">' . "\n" .
+    '<p class="submit">' .
+    '<input type="submit" name="do_mig_joomgallery_btn" value="Start Migration of Media Data to WP" />' .
+    '</p>' . "\n" .
+    '</div>' . "\n";
+  }
+  
+  echo
+  '<br /><hr /><br />' . "\n" .
+  '<h3>URLs in Posts Migration</h3>' . "\n" .
+  '<br />' . "\n" .
+  _e('To change the URLs in the content from ' . $j2wp_cms_types[$j2wp_cms_type] . ' posts to WP posts - press the button below!', 'joomla2wp') . "\n" .
+  '<br />' . "\n" .
+  '<p class="submit">' . "\n" .
+  '<input type="submit" name="change_urls_btn" value="Change Urls" />' . "\n" .
+  '</p>' . "\n" .
+  '</form>' . "\n" .
+  '</div>   <!--- DIV wrap END  --->' . "\n";
 
   return;
 }
@@ -606,6 +646,42 @@ function joomla2wp_print_cat_sel_page()
   
   return;
 }
+
+
+function joomla2wp_print_joomgallery_cat_sel_page()
+{
+  //  get all cats from joomla
+  $joomla_cats = j2wp_get_joomla_joomgallery_cats();
+
+  // print panel with cats
+  echo '<div class="wrap">' . "\n";
+  echo '<h3>' . __( 'Select the image categories you want migrate to WP !' , 'joomla2wp' ) . '</h3>' . "\n";
+  echo '<br />' . "\n";
+  echo '<form id="j2wp_cat_sel_form" name="joomla_cat_sel_list" enctype="application/x-www-form-urlencoded" method="post">' . "\n";
+  echo '  <p>' . "\n";
+  $rows = count($joomla_cats);
+  $height = $rows * 10;
+//  echo '    <select name="joomla_cat_box[]" style="height:' . $height . 'px" multiple="multiple" size="' . $rows . '">' . "\n";
+  echo '    <select id="cat_select_id" class="cat_select" name="joomla_cat_joomgallery_box[]" multiple="multiple" size="' . $rows . '">' . "\n";
+  $index = 0;
+  foreach ( $joomla_cats as $jcat )
+  {
+    echo '      <option value="' . $index . '" >' . $jcat['name'] . '</option>' . "\n";
+    $index++;
+  }
+  echo '    </select>' . "\n";
+  echo '  </p>' . "\n";
+  echo '  <p class="submit">' . "\n";
+  echo '    <input type="submit" name="j2wp_cats_abort_btn" value="' . __( 'Abort', 'joomla2wp') . '" />' . "\n";
+  echo '    <input id="j2wp_cat_joomgallery_sel_cont_btn" type="submit" name="j2wp_cats_joomgallery_continue_btn" value="' . __( 'Continue', 'joomla2wp') . '" />' . "\n";
+  echo '    <br />' . "\n";
+  echo '  </p>' . "\n";
+  echo '</form>' . "\n";
+  echo '</div>   <!--- DIV wrap END  --->' . "\n";
+  
+  return;
+}
+
 
 
 function j2wp_print_img_copy_page()

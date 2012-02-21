@@ -3,7 +3,7 @@
 Plugin Name: Joomla/Mambo to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
 Description: migrates/imports all posts/pages from Joomla/Mambo tables to WP tables
-Version: 1.5.4
+Version: 1.6.0
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -132,6 +132,7 @@ function register_j2wp_options()
   add_option( 'j2wp_cat_sel', 'on' );
   add_option( 'j2wp_page_sel', 'on' );
   add_option( 'j2wp_users_sel', 'on' );
+  add_option( 'j2wp_joomgallery_sel', 'on' );
   add_option( 'j2wp_mysql_srv', 'localhost' );
   add_option( 'j2wp_mysql_use_one_srv', '0' );
   add_option( 'j2wp_mysql_usr', '' );
@@ -282,6 +283,23 @@ function joomla2wp_plugin_create_migration_page()
       $_POST['print_cats_sel_page'] = true;
     }
   }
+  
+  if ( isset( $_POST['j2wp_cats_joomgallery_continue_btn'] ) )
+  {
+    // get the selected cats
+    $sel_values = $_POST['joomla_cat_joomgallery_box'];
+
+    if ( $sel_values )
+    {
+      $j2wp_error_flag = j2wp_prepare_mig( 3, $sel_values );
+    }
+    else
+    {
+      echo '<div id="message" class="error">';
+      echo '<strong>No category selected !!!</strong>.</div>';
+    }
+  }
+  
 
   if ( $_POST['print_cats_sel_page'] )
   {
@@ -295,6 +313,13 @@ function joomla2wp_plugin_create_migration_page()
   {
     $_POST['print_cats_sel_page'] = false;
     joomla2wp_print_plugin_migration_page();
+  }
+
+  if ( isset( $_POST['do_mig_joomgallery_btn'] ) )
+  {
+    j2wp_print_output_page();
+
+    joomla2wp_print_joomgallery_cat_sel_page();
   }
 
   switch($j2wp_error_flag)
@@ -393,6 +418,16 @@ function j2wp_set_migration_options()
     $_POST['new_j2wp_users_sel'] = 'on';
     $j2wp_users_sel = 'on';
   }
+  if (!isset( $_POST['new_j2wp_joomgallery_sel'] ))
+  {
+    $_POST['new_j2wp_joomgallery_sel'] = 'off';
+    $j2wp_joomgallery_sel = 'off';
+  }
+  else
+  {
+    $_POST['new_j2wp_joomgallery_sel'] = 'on';
+    $j2wp_joomgallery_sel = 'on';
+  }
   if (!isset( $_POST['new_j2wp_cpage_conv'] ))
   {
     $_POST['new_j2wp_cpage_conv'] = 'off';
@@ -406,6 +441,7 @@ function j2wp_set_migration_options()
 
   update_option( 'j2wp_page_sel' , $j2wp_page_sel );
   update_option( 'j2wp_users_sel', $j2wp_users_sel );
+  update_option( 'j2wp_joomgallery_sel', $j2wp_joomgallery_sel );
   update_option( 'j2wp_cat_sel'  , $j2wp_cat_sel );
   update_option( 'j2wp_cpage_conv',$j2wp_cpage_conv );
 

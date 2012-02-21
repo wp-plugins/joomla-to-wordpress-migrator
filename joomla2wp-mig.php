@@ -27,7 +27,7 @@ function throwERROR($msg)
     return;
 }
 
-function j2wp_prepare_mig( $func )
+function j2wp_prepare_mig( $func, $sel_values = NULL )
 {
   global  $j2wp_error_flag;
 
@@ -110,6 +110,26 @@ function j2wp_prepare_mig( $func )
         j2wp_do_mig( $joomla_temp_cats );
 
         break;
+      case 3:
+        j2wp_print_output_page();
+        ob_end_flush();
+
+        //  get all cats from joomla
+        $joomla_cats = j2wp_get_joomla_joomgallery_cats();
+
+        $joomla_temp_cats = array();
+        foreach ( $sel_values as $val )
+        {
+          $joomla_temp_cats[] = array(
+                              'cid'     => $joomla_cats[$val]['cid'],
+                              'name'    => $joomla_cats[$val]['name'],
+                              'catpath' => $joomla_cats[$val]['catpath']
+                              );
+        }
+
+        j2wp_do_joomgallery_mig( $joomla_temp_cats );
+
+        break;
     }
     $j2wp_error_flag = 0;
   }
@@ -185,6 +205,84 @@ function j2wp_do_mig( $joomla_cats )
     echo '<br />' . "\n";
     echo '<b><i>migrating pages</i></b>....<br /><br />' . "\n";
     j2wp_mig_pages($j2wp_user_array);
+  }
+
+  $mtime = microtime(); 
+  $mtime_end = explode(' ',$mtime); 
+  $totaltime[0] = ($mtime_end[0] - $mtime_start[0]); // microseconds like 0.xxxxxxx
+  $totaltime[1] = ($mtime_end[1] - $mtime_start[1]); 
+
+  echo '<br />' . "\n";
+  echo 'script execution time: ' . $totaltime[1] . ' seconds <br /><br />'; 
+
+  echo '<div id="message" class="updated fade">';
+  echo '<strong>Migration done </strong>.</div>';
+
+  ob_end_flush();
+
+  return;
+}
+
+function j2wp_do_joomgallery_mig( $joomla_cats )
+{
+  global  $wpdb,
+          $CON,
+          $user_id;
+
+  global  $j2wp_mysql_srv,
+          $j2wp_mysql_usr,
+          $j2wp_mysql_pswd,
+          $j2wp_user_array,
+          $j2wp_joomla_db_name,
+          $j2wp_joomla_tb_prefix,
+          $j2wp_joomla_web_url,
+          $j2wp_wp_db_name,
+          $j2wp_wp_tb_prefix,
+          $j2wp_wp_web_url;
+
+
+  $mtime = microtime(); 
+  $mtime_start = explode(' ',$mtime); 
+
+  // setting timelimit
+  if ( function_exists('set_time_limit') )
+  {
+    ignore_user_abort(1);
+    set_time_limit(0);
+  }
+  else
+    _e( '<br />Warning: can not execute set_time_limit() script may abort...<br />', 'joomla2wp');
+
+  if ( !$CON )
+    $CON = j2wp_do_mysql_connect();
+
+  $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
+  j2wp_do_wp_connect();
+
+  //  check if user adminwp exists
+  $user_name = 'adminwp';
+  $user_id = username_exists( $user_name );
+  if ( !$user_id ) 
+  {
+    $random_password = wp_generate_password( 12, false );
+    $user_id = wp_create_user( $user_name, $random_password, $user_email );
+  }
+  
+  //  check if Fotogallery Category exists
+  $joomgallery_cat = get_cat_ID('Fotogallery');
+  if ( !$joomgallery_cat )
+    $joomgallery_cat = wp_create_category( 'Fotogallery' );
+  
+  echo '<h4>Content Migration</h4><br />' . "\n";
+
+  //  j2wp_joomla_wp_posts_by_cat( $mig_cat_array[10], 10, $user_id );
+
+  $index = 0;  
+  foreach ( $joomla_cats as $jcat )
+  {
+    // for each category in joomgallery process all data
+    j2wp_joomla_wp_joomgallery_by_cat( $joomgallery_cat, $jcat, $user_id );
+    $index++;
   }
 
   $mtime = microtime(); 
@@ -618,6 +716,37 @@ function j2wp_get_joomla_cats()
   return $joomla_cats;
 }
 
+function j2wp_get_joomla_joomgallery_cats()
+{
+  global  $wpdb,
+          $CON;
+          
+
+  if ( !$CON )
+    $CON = j2wp_do_mysql_connect();
+
+  $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
+  j2wp_do_joomla_connect();
+  
+  $query = "SELECT cid, name, catpath FROM " . $j2wp_joomla_tb_prefix . "joomgallery_catg WHERE published = 1 ORDER BY cid ";
+  $result = mysql_query($query, $CON);
+  if ( !$result )
+    echo mysql_error();
+  
+  while($row = mysql_fetch_array($result)) 
+  {
+    $joomla_cats[] = array(
+                          'cid' => $row['cid'],
+                          'name' => $row['name'],
+                          'catpath' => $row['catpath']
+                          );
+  }
+  mysql_free_result($result);
+
+  return $joomla_cats;
+}
+
+
 
 function j2wp_get_post_count( $mig_cat_array )
 {
@@ -641,6 +770,102 @@ function j2wp_get_post_count( $mig_cat_array )
   return $j2wp_post_count;
 }
 
+
+function j2wp_get_image_count( $jcat )
+{
+  global  $wpdb,
+          $CON;
+
+  $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
+  j2wp_do_joomla_connect();
+  set_time_limit(25);
+
+  $query = "SELECT COUNT(*) FROM `" . $j2wp_joomla_tb_prefix . "joomgallery` WHERE catid = '" . $jcat . "' ";
+  $result = mysql_query($query, $CON);
+  if ( !$result )
+    echo mysql_error();
+  while($R = mysql_fetch_array($result)) 
+  {
+    $j2wp_image_count = $R[0];
+  }
+  mysql_free_result($result);
+
+  return $j2wp_image_count;
+}
+
+
+function  j2wp_joomla_wp_joomgallery_by_cat( $joomgallery_cat, $jcat, $user_id )
+{
+  global  $wpdb,
+          $CON;
+
+  $wp_img_folder       = get_option('j2wp_wp_images_folder');
+  $wp_blog_url         = 'http://' . get_option('j2wp_wp_web_url');
+  $j2wp_joomla_tb_prefix = get_option('j2wp_joomla_tb_prefix');
+  j2wp_do_joomla_connect();
+
+  echo '<br />' . __('Processing Category: <b>', 'joomla2wp') . $jcat['name'] . '</b>   ===>';
+
+  // first get count of posts in category
+  $j2wp_image_count = j2wp_get_image_count( $jcat['cid'] );
+
+  _e( ' found ', 'joomla2wp');
+  echo $j2wp_image_count . ' images.... <br />';
+  flush();
+  ob_flush();
+  sleep(1);
+
+  // process all images
+  set_time_limit(0);
+
+  $post_contant = '';
+  $query = "SELECT * FROM `" . $j2wp_joomla_tb_prefix . "joomgallery` WHERE catid = '" . $jcat['cid'] . "' ";
+  $result = mysql_query($query, $CON);
+  if ( !$result )
+    echo mysql_error();
+  while( $R = mysql_fetch_array($result) ) 
+  {
+    $j2wp_image = array( 'title'  => $R['imgtitle'],
+                         'author' => $R['imgauthor'],
+                         'text'   => $R['imgtext'],
+                         'file'   => $R['imgfilename']  
+                       );
+                       
+    //  create post image link entry
+    $img_src =  $wp_blog_url . $wp_img_folder . '/gallery/' . $jcat['catpath'] . '/' . $j2wp_image['file'];
+    $post_content .= '<a title="' . $j2wp_image['title'] . '" href="' . $img_src . '"><img src="' . $img_src . '" title="' . $j2wp_image['title'] . '" alt="' . $j2wp_image['title'] . '" /></a>';
+  }
+  mysql_free_result($result);
+
+  $j2wp_wp_tb_prefix = get_option('j2wp_wp_tb_prefix');
+  j2wp_do_wp_connect();
+
+  //  create post
+  $wp_post = array(
+        'post_author' => $user_id,
+        'post_category' => array($joomgallery_cat),
+        'post_content' => $post_content, 
+        'post_title' => $jcat['name'],
+        'post_status' => 'publish',
+        'comment_status' => 'open',
+        'ping_status' => 'open',
+        'post_name' => sanitize_title($jcat['name']),
+        'post_type' => 'post'
+      );
+
+  /*
+        'post_date'     => NULL,
+        'post_date_gmt' => NULL,
+        'post_modified' => NULL,
+        'post_modified_gmt' => NULL,
+    */
+
+  wp_insert_post( $wp_post );              
+  
+  echo '<br />Post created.<br />' . "\n";
+
+  return;
+}
 
 
 function  j2wp_joomla_wp_posts_by_cat( $mig_cat_array, $cat_index, $user_id )
