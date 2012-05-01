@@ -5,7 +5,7 @@ Plugin Uri: http://it-gnoth.de/wordpress/wordpress-plugins
 Tags: joomla, mambo, wordpress, migrator, converter, import
 Requires at least: 2.7
 Tested up to: WP 3.3
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 
 A plugin to migrate content from Joomla/Mambo to Wordpress.
 
@@ -30,6 +30,7 @@ After sucessfull migration you can press the "Change Urls" button to change the 
 features:
 
 - migrates articles and static pages
+- changes customs strings during migration
 - migrates user
 - changes the urls in the posts and pages to point to the new destination
 - changes the imgage urls to point to the new image location
@@ -184,6 +185,9 @@ the directory of the stable readme.txt, so in this case, `/tags/4.3/screenshot-1
 
 = 1.6.0 =
 - migration of JoomGallery images added
+
+= 1.7.0 =
+- string replace feature during migration added
 
 `<?php code(); // goes in backticks ?>`
 

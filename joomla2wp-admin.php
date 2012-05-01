@@ -37,7 +37,8 @@ function joomla2wp_print_plugin_option_page()
   $joomgallery_sel   = get_option("j2wp_joomgallery_sel");
   $mysql_change_vars = get_option("j2wp_mysql_change_vars");
   $j2wp_cpage_conv   = get_option("j2wp_cpage_conv");
-
+  $j2wp_url_change_patterns = get_option('j2wp_url_change_patterns');
+  
   if ( $mysql_change_vars == 'on' )
   {
     $mysql_change_vars_checkbox = ' checked="checked" ';
@@ -437,12 +438,73 @@ function joomla2wp_print_plugin_option_page()
   '                        <p>' . __( 'decide if during the migration the content should be converted to the wordpress character codepage.', 'joomla2wp') . '</b>.</p>' . "\n" .
   '                      </td>' . "\n" .
   '                    </tr>' . "\n" .
-  '                    </table>' . "\n" .
-  '                  </div>
-                <br />
-                <div class="submit">' . "\n" .
+  '                  </table>' . "\n" .
+  '                </div>
+                   <br />
+                   <div class="submit">' . "\n" .
   '                  <div class="div-wait" id="divwaitms0"><img src="' . JTWPURL . 'img/loading.gif" /></div>' . "\n" .
   '                  <input type="submit" class="button-secondary" value="Set Migration Options &raquo;" id="j2wp_migration_options_btn" name="j2wp_migration_options_update" onclick="document.getElementById(nameofDivWait).style.display=\'inline\';this.form.submit();" />' . "\n" .
+  '                </div>' . "\n" .
+  '              </div>' . "\n" .
+  '            </div>' . "\n" .
+  '            <div class="postbox ui-droppable" id="url-migration-options-div">' . "\n" .
+  '              <div title="' . __('Zum umschalten klicken', 'joomla2wp') . '" class="handlediv"><br /></div>' . "\n" .
+  '              <h3 class="hndle">' . __('String Replace during Migration', 'joomla2wp') . '</h3>' . "\n" .
+  '              <div class="inside">' . "\n" .
+  '                  <div id="plugin_option_set">' . "\n" .
+  '                    <table class="form-table">' . "\n" .
+  '                    <tr>' . "\n" .
+  '                      <td width="30%">' . "\n" .
+  '                        ' . __('Search and replace strings:') . "\n" .
+  '                      </td>' . "\n" .
+  '                      <td>' . "\n" .
+  '	                       ' . __('Search string') . "\n" .
+  '                      </td>' . "\n" .
+  '                      <td>' . "\n" .
+  '	                       ' . __('Replace string') . "\n" .
+  '                      </td>' . "\n" .
+  '                    </tr>' . "\n";
+  
+  $pattern_cnt =  count($j2wp_url_change_patterns);
+  if ( empty($j2wp_url_change_patterns[0]['search']) )
+    $pattern_cnt = 0;
+  for ( $i = 0; $i <= $pattern_cnt; $i++ )
+  {
+    echo
+    '                    <tr>' . "\n" .
+    '                      <td width="30%">' . "\n" .
+    '                      </td>' . "\n";
+  
+    if ( !empty($j2wp_url_change_patterns[$i]['search']) )
+    {
+      $search_value  = $j2wp_url_change_patterns[$i]['search']; 
+      $replace_value = $j2wp_url_change_patterns[$i]['replace']; 
+    }
+    else
+    {
+      $search_value  = ''; 
+      $replace_value = ''; 
+    }
+    echo
+    '                      <td>' . "\n" .
+    '                        <input name="j2wp_url_change_patterns_search_' . $i . '" id="j2wp_url_change_patterns_search_' . $i . '_id" type="text" value="' . $search_value . '" />' . "\n" .
+    '                      </td>' . "\n" .
+    '                      <td>' . "\n" .
+    '                        <input name="j2wp_url_change_patterns_replace_' . $i . '" id="j2wp_url_change_patterns_replace_' . $i . '_id" type="text" value="' . $replace_value . '" />' . "\n" .
+    '                      </td>' . "\n" .
+    '                    </tr>' . "\n";
+  }
+  
+  echo
+  '                    <tr>' . "\n" .
+  '                      <td>' . "\n" .
+  '                        <div class="submit">' . "\n" .
+  '                          <div class="div-wait" id="divwaitmsg0"><img src="' . JTWPURL . 'img/loading.gif" /></div>' . "\n" .
+  '                          <input type="submit" class="button-secondary" value="' . __('Add Pattern') . '" id="j2wp_add_url_change_pattern_btn_id" name="j2wp_add_url_change_pattern_btn" onclick="document.getElementById(nameofDivWait).style.display=\'inline\';this.form.submit();" />' . "\n" .
+  '                        </div>' . "\n" .
+  '                      </td>' . "\n" .
+  '                    </tr>' . "\n" .
+  '                  </table>' . "\n" .
   '                </div>' . "\n" .
   '              </div>' . "\n" .
   '            </div>' . "\n" .

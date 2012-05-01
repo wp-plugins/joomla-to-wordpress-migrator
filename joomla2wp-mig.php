@@ -914,14 +914,15 @@ function  j2wp_joomla_wp_posts_by_cat( $mig_cat_array, $cat_index, $user_id )
     $wp_posts    = $result_array[1];
     $post_tags   = $result_array[2];
     $post_images = $result_array[3];
+    $post_meta_keys = $result_array[4];
 
-    j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_images, $wp_cat_id );
+    j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_images, $wp_cat_id, $post_meta_keys );
   }
   
   return;
 }
 
-function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_images, $wp_cat_id )
+function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_images, $wp_cat_id, $post_meta_keys )
 {
   global  $wpdb,
           $user_id,
@@ -974,6 +975,13 @@ function j2wp_insert_posts_to_wp( $sql_query, $wp_posts, $post_tags, $post_image
       $tags = $post_tags[$count];
       wp_set_post_tags( $id, $tags, false );
       usleep(10);
+
+      //  set post meta keys
+      $created_by_alias = $post_meta_keys[$count];
+      if ( !empty($created_by_alias) )
+      {
+        $rc = add_post_meta($id, 'joomla_author_alias', $created_by_alias);
+      }
 
       //  add attachment to post
       $joomla_img_folder       = get_option('j2wp_joomla_images_folder');
@@ -1123,6 +1131,7 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
   unset($result_array);  
   $sql_query = array();
   $post_tags = array();
+  $posts_meta_keys = array();
   $post_images = array();
   $STORAGE   = array();
   $wp_posts  = array();
@@ -1188,6 +1197,9 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
     $post_content = str_replace('<hr id="system-readmore" />',"<!--more-->",$post_content);
     $post_content = str_replace('<hr id="system-readmore"/>',"<!--more-->",$post_content);
     //  $post_content = str_replace('src="images/','src="/images/',$post_content);
+
+    //  check for custom replace strings
+    $post_content = j2wp_change_custom_strings( $post_content );
 
     //  find all normal image tags
     $pos = 0;
@@ -1290,6 +1302,7 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
 
     $post_tags[]   = $R->metakey;
     $post_images[] = $R->images;
+    $posts_meta_keys[] = $R->created_by_alias;
     set_time_limit(0);
   }
   mysql_free_result($result);
@@ -1343,6 +1356,7 @@ function j2wp_process_posts_by_step( $mig_cat_array, $working_steps, $working_po
   $result_array[1] = $wp_posts;
   $result_array[2] = $post_tags;
   $result_array[3] = $post_images;
+  $result_array[4] = $posts_meta_keys;
 
   return $result_array;
 }
@@ -1445,6 +1459,7 @@ function joomla2wp_change_urls()
         //  do changes to post
         $post_changed = 1;
       }
+
       //  go to position after href=" to check if there is another link in the content
       $lnk_pos = $lnk_pos + 7;
     }
@@ -1531,9 +1546,10 @@ function j2wp_change_single_url( $j2wp_post, $lnk_pos )
       $permalink = get_permalink( $url_post_id );
       $j2wp_url_processed = true;
     }
+  }
   
-    if ( ($j2wp_url_processed === false) )
-    {
+  if ( ($j2wp_url_processed === false) )
+  {
       //  it is a category or .html or attachment file
       $link_string        = substr( $post_lnk_string, 7, strlen( $post_lnk_string ) - 8);
       $pos_lnk_last_slash = strrpos( $link_string, '/'); 
@@ -1585,19 +1601,39 @@ function j2wp_change_single_url( $j2wp_post, $lnk_pos )
         //  strrpos($last_string, '.')
         echo 'Post ID: ' . $j2wp_post['ID'] . ' link: ' . $post_lnk_string . '<br />'; 
       }
-    } 
   }
-
+  
   //  update URL String with new content
   if ( $permalink )
   {
     $j2wp_post['post_content'] =  substr( $j2wp_post['post_content'], 0, $lnk_pos) . 'href="' . $permalink . '" ' .
                                   substr( $j2wp_post['post_content'], $post_lnk_end + 1);
   }
-
+  
   return $j2wp_post;
 }
 
+
+//  custom strings 
+function j2wp_change_custom_strings($post_content)
+{
+  //  get url change patterns
+  $j2wp_url_change_patterns = get_option('j2wp_url_change_patterns');
+
+  $j2wp_url_processed = false;
+  for ( $i=0; ($i < count($j2wp_url_change_patterns)) AND !($j2wp_url_processed); $i++ )
+  {
+    $j2wp_search_string  = $j2wp_url_change_patterns[$i]['search']; 
+    $j2wp_replace_string = $j2wp_url_change_patterns[$i]['replace'];
+    if ( (!(strpos( $post_content, $j2wp_search_string) === false)) )
+    {
+      $post_content = str_replace( $j2wp_search_string, $j2wp_replace_string, $post_content);
+      $j2wp_url_processed = true;
+    }
+  }
+  
+  return $post_content;
+}
 
 function j2wp_get_post_url_for_cat_id( $cat_id )
 {

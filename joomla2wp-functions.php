@@ -3,7 +3,7 @@
 Plugin Name: Joomla/Mambo to WP Migrator
 Plugin URI: http://www.it-gnoth.de/wordpress/wordpress-plugins/
 Description: migrates/imports all posts/pages from Joomla/Mambo tables to WP tables
-Version: 1.6.0
+Version: 1.7.0
 Author: Christian Gnoth
 Author URI: http://www.it-gnoth.de
 License: GPL2
@@ -133,6 +133,7 @@ function register_j2wp_options()
   add_option( 'j2wp_page_sel', 'on' );
   add_option( 'j2wp_users_sel', 'on' );
   add_option( 'j2wp_joomgallery_sel', 'on' );
+  add_option( 'j2wp_url_change_patterns', '' );
   add_option( 'j2wp_mysql_srv', 'localhost' );
   add_option( 'j2wp_mysql_use_one_srv', '0' );
   add_option( 'j2wp_mysql_usr', '' );
@@ -181,7 +182,7 @@ function joomla2wp_plugin_create_option_page()
     j2wp_set_cms();
   }
 
-  if ( isset( $_POST['j2wp_migration_options_update'] ) )
+  if ( isset( $_POST['j2wp_migration_options_update'] ) OR isset( $_POST['j2wp_add_url_change_pattern_btn']) )
   {
     j2wp_set_migration_options();
   }
@@ -388,6 +389,23 @@ function j2wp_set_cms()
 
 function j2wp_set_migration_options()
 {
+  if ( isset( $_POST['j2wp_add_url_change_pattern_btn'] ) )
+  {
+    $j2wp_url_change_patterns = array();
+    $i = 0;
+    foreach ( $_POST as $key => $value )
+    {
+      if ( !(strpos( $key, 'j2wp_url_change_patterns_search') === false) )
+      {
+        $pos = strpos( $key, 'j2wp_url_change_patterns_search_');
+        $pattern_number = intval( substr($key, $pos + 32) );
+        $j2wp_url_change_patterns[$i]['search']  =  $_POST['j2wp_url_change_patterns_search_' . $pattern_number];
+        $j2wp_url_change_patterns[$i]['replace'] =  $_POST['j2wp_url_change_patterns_replace_' . $pattern_number];
+        $i++;
+      }
+    }
+  }
+
   if (!isset( $_POST['new_j2wp_cat_sel'] ))
   {
     $_POST['new_j2wp_cat_sel'] = 'off';
@@ -444,6 +462,7 @@ function j2wp_set_migration_options()
   update_option( 'j2wp_joomgallery_sel', $j2wp_joomgallery_sel );
   update_option( 'j2wp_cat_sel'  , $j2wp_cat_sel );
   update_option( 'j2wp_cpage_conv',$j2wp_cpage_conv );
+  update_option( 'j2wp_url_change_patterns', $j2wp_url_change_patterns );
 
   echo '<div id="message" class="updated fade">';
   echo '<strong>Options updated !</strong></div>' . "\n";
