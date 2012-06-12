@@ -1621,14 +1621,17 @@ function j2wp_change_custom_strings($post_content)
   $j2wp_url_change_patterns = get_option('j2wp_url_change_patterns');
 
   $j2wp_url_processed = false;
-  for ( $i=0; ($i < count($j2wp_url_change_patterns)) AND !($j2wp_url_processed); $i++ )
+  if ( count($j2wp_url_change_patterns) )
   {
-    $j2wp_search_string  = $j2wp_url_change_patterns[$i]['search']; 
-    $j2wp_replace_string = $j2wp_url_change_patterns[$i]['replace'];
-    if ( (!(strpos( $post_content, $j2wp_search_string) === false)) )
+    for ( $i=0; ($i < count($j2wp_url_change_patterns)) AND !($j2wp_url_processed); $i++ )
     {
-      $post_content = str_replace( $j2wp_search_string, $j2wp_replace_string, $post_content);
-      $j2wp_url_processed = true;
+      $j2wp_search_string  = $j2wp_url_change_patterns[$i]['search']; 
+      $j2wp_replace_string = $j2wp_url_change_patterns[$i]['replace'];
+      if ( (!(strpos( $post_content, $j2wp_search_string) === false)) )
+      {
+        $post_content = str_replace( $j2wp_search_string, $j2wp_replace_string, $post_content);
+        $j2wp_url_processed = true;
+      }
     }
   }
   
